@@ -1,3 +1,23 @@
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+
+[project]
+name = "qdls"
+version = "0.0.1"
+authors = [
+  { name="Qing25", email="aqsz2526@outlook.com" },
+]
+description = "Q-Deep Learning Snippets, my working code snippets"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pypa/sampleproject"
+"Bug Tracker" = "https://github.com/pypa/sampleproject/issues"
