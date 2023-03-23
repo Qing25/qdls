@@ -3,23 +3,36 @@ from pygments.lexers import get_lexer_by_name
 from pygments.lexers.graph import CypherLexer
 from pygments.token import *
 from antlr4.tree.Tree import TerminalNodeImpl
+from antlr4 import InputStream, CommonTokenStream
 
-def parse_layer(tree, rule_names, parts, parents, indent = 0):
-    """ 遍历树，保存叶子结点 """
-    if tree.getText() == "<EOF>":
-        return
-    elif isinstance(tree, TerminalNodeImpl):
-        # print("{0}TOKEN='{1}'".format("  " * indent, tree.getText()))
-        # layer[indent].append(tree.getText())
-        parts.append(tree.getText())
-        parents.append(tree.getParent())
-    elif tree.children is None:
-        # print("none children", tree)
-        return
-    else:
-        # print("{0}{1}".format("  " * indent, rule_names[tree.getRuleIndex()]))
-        for child in tree.children:
-            parse_layer(child, rule_names, parts, parents, indent + 1)
+from ..grammar.CypherParser import CypherParser
+from ...utils import parse_layer
+
+def parse_cypher(cypher, tree_only=False):
+    """ 返回输入 Cypher 语句的AST树 
+        AST 树、序列化的树
+        便利后得到的 每个token 及其对应的父节点
+    """
+    input_stream = InputStream(cypher)
+    # print(input_stream)
+    lexer = CypherLexer(input_stream)
+    stream = CommonTokenStream(lexer)
+    parser = CypherParser(stream)
+    tree = parser.oC_Cypher()
+    tree.toStringTree()
+    if tree_only:
+        return tree, parser  
+    parts, parents = [], []
+    # print(tree)
+    # traverse(tree, parser.ruleNames)
+    parse_layer(tree, parser.ruleNames, parts, parents)
+    # print("after parsing", tree)
+    # for token, par in zip(parts, parents):
+        # print(token, "\t", par)
+    s = tree.toStringTree(recog=parser)
+    return tree, s, parts, parents 
+
+
 
 def get_cypher_nodes(tree, parser):
     """遍历语法树 返回树字符串、节点列表、  
@@ -27,7 +40,6 @@ def get_cypher_nodes(tree, parser):
     Args:
         tree: 
         parser: 
-
     """
     parts, parents = [], []
     parse_layer(tree, parser.ruleNames, parts, parents)
@@ -60,3 +72,4 @@ def split_query(query, lexer=None):
             pred_units.append(substr)
 
     return pred_units
+

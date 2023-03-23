@@ -3,6 +3,7 @@ import sys
 import json
 import yaml
 import argparse
+from  argparse import Namespace
 from omegaconf import OmegaConf as oc
 
 import torch
@@ -325,6 +326,26 @@ def resume_config(config, path):
 
 
 
+def build_config(d):
+    """ 嵌套的 argparse.Namespace """
+    config = Namespace()
+    for k,v in d.items():
+        if type(v) == dict:
+            setattr(config,k, build_config(v))
+        else:
+            setattr(config, k, v)
+    return config 
+    
+def namespace2dict(config):
+    d = {}
+    for k,v in config.__dict__.items():
+        if type(v) is Namespace:
+            d[k] = namespace2dict(v)
+        else:
+            d[k] = v 
+    return d 
+
+
 if __name__ == '__main__':
     # print( os.getcwd())
     # config = Config.from_dict({'a':23, 'b':{'c':'we'}})
@@ -339,7 +360,22 @@ if __name__ == '__main__':
     # c2.model_specific = {'k':10, 'n':50}
     # print(hasattr(c2, 'model_specific'), c2)
     # print_info("This config:")
-    c2 = Config.load("./tmp.yaml")
-    print_config(c2)
-    print_string("THis is good"*5)
+
+
+    # c2 = Config.load("./tmp.yaml")
+    # print_config(c2)
+    # print_string("THis is good"*5)
     
+    def test_namespace():
+        d = {
+            'name': {
+                '1': 1,
+                '2':2
+            },
+            'list': [1,2,3]
+        }
+        c = build_config(d)
+        print(c)
+        print(namespace2dict(c))
+
+    test_namespace()
