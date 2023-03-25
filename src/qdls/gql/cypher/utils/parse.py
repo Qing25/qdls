@@ -1,11 +1,12 @@
 
 from pygments.lexers import get_lexer_by_name
-from pygments.lexers.graph import CypherLexer
+
 from pygments.token import *
 from antlr4.tree.Tree import TerminalNodeImpl
 from antlr4 import InputStream, CommonTokenStream
 
 from ..grammar.CypherParser import CypherParser
+from ..grammar.CypherLexer import CypherLexer
 from ...utils import parse_layer
 
 def parse_cypher(cypher, tree_only=False):
