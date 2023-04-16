@@ -60,9 +60,8 @@ def exec_single_query(query, config):
             return e
         return res
 
-def threads_execution(queries, config, nthreads):
+def threads_execution(queries, nthreads=16, config=None):
     """
-
     Args:
         queries: a list of query strings
         config: 连接参数
@@ -70,13 +69,48 @@ def threads_execution(queries, config, nthreads):
     Returns:
         执行结果
     """
+    if config is None:
+        raise Exception(f'config is None!!! expected: argparse.Namespace(neo4j_uri="neo4j://ip:port", neo4j_user="neo4j", neo4j_passwd="xxx", timeout=10)')
+
     
     thread_pool = ThreadPoolExecutor(nthreads) 
     R = []
-    for res in thread_pool.map(exec_single_query, queries, [config]*len(queries)):
+    result_iter = thread_pool.map(exec_single_query, queries, [config]*len(queries))
+    for res in tqdm(result_iter, total=len(queries)):
         R.append(res)
     assert len(R) == len(queries), f"{len(R)} != {len(queries)}"
     return R 
+
+
+def process_execute(queries, nproc=8, config=None):
+    """多进程执行查询，速度比多线程快(3000,32测试快3倍)
+
+    Args:
+        queries: List, 要处理的数据,
+        nproc: 进程数目. Defaults to 8.
+        config: Neo4j连接配置. Defaults to None.
+
+    Raises:
+        Exception: config 
+
+    Returns:
+        List, 执行结果
+    """
+    if config is None:
+        raise Exception(f'config is None!!! expected: argparse.Namespace(neo4j_uri="neo4j://ip:port", neo4j_user="neo4j", neo4j_passwd="xxx", timeout=10)')
+
+    Results = [] 
+    with Pool(nproc) as pool:
+        R = {}
+        for sample in queries:
+            future = pool.apply_async(exec_single_query, (sample, config))
+            R[future] = sample
+        
+        for future in tqdm(R):
+            res = future.get()
+            Results.append(res)
+    assert len(Results) == len(queries), f"{len(R)} != {len(queries)}"
+    return Results
 
     
 def make_neo4j_date_serializale(obj):
