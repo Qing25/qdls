@@ -27,7 +27,7 @@ from transformers import BartForConditionalGeneration, BartTokenizer
 ROOT = "/pretrains/pt"
 
 @dataclass
-class ModelInfo:
+class ModelCard:
     web_dirname : str                        # hfl/bert-base-wwm
     model : object = AutoModel
     tokenizer : object = AutoTokenizer
@@ -71,116 +71,116 @@ class ModelInfo:
 
 models = [
     
-    ModelInfo('hfl/chinese-roberta-wwm-ext-large', model=BertForPreTraining),
-    ModelInfo('hfl/chinese-bert-wwm-ext', model=BertForPreTraining),
-    ModelInfo('hfl/chinese-bert-wwm', model=BertForPreTraining),
-    ModelInfo('hfl/chinese-macbert-base', model=BertForPreTraining),
-    ModelInfo('hfl/chinese-macbert-large', model=BertForPreTraining),
-    ModelInfo('hfl/chinese-electra-180g-large-discriminator', model=ElectraForPreTraining, tokenizer=ElectraTokenizer),
-    ModelInfo('hfl/chinese-legal-electra-large-discriminator', model=ElectraForPreTraining, tokenizer=ElectraTokenizer),
-    ModelInfo('hfl/chinese-xlnet-mid', model=XLNetLMHeadModel),
-    ModelInfo('hfl/chinese-xlnet-base', model=XLNetLMHeadModel),
-    ModelInfo('hfl/rbt3', model=BertForPreTraining),           # re-trained 3-layer RoBERTa-wwm-ext model
+    ModelCard('hfl/chinese-roberta-wwm-ext-large', model=BertForPreTraining),
+    ModelCard('hfl/chinese-bert-wwm-ext', model=BertForPreTraining),
+    ModelCard('hfl/chinese-bert-wwm', model=BertForPreTraining),
+    ModelCard('hfl/chinese-macbert-base', model=BertForPreTraining),
+    ModelCard('hfl/chinese-macbert-large', model=BertForPreTraining),
+    ModelCard('hfl/chinese-electra-180g-large-discriminator', model=ElectraForPreTraining, tokenizer=ElectraTokenizer),
+    ModelCard('hfl/chinese-legal-electra-large-discriminator', model=ElectraForPreTraining, tokenizer=ElectraTokenizer),
+    ModelCard('hfl/chinese-xlnet-mid', model=XLNetLMHeadModel),
+    ModelCard('hfl/chinese-xlnet-base', model=XLNetLMHeadModel),
+    ModelCard('hfl/rbt3', model=BertForPreTraining),           # re-trained 3-layer RoBERTa-wwm-ext model
     # QA
-    ModelInfo('luhua/chinese_pretrain_mrc_roberta_wwm_ext_large', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
-    ModelInfo('luhua/chinese_pretrain_mrc_macbert_large', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
-    ModelInfo('uer/roberta-base-chinese-extractive-qa', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
-    # ModelInfo('mrm8488/spanbert-large-finetuned-squadv2', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
-    ModelInfo('schen/longformer-chinese-base-4096', model=LongformerModel, tokenizer=BertTokenizer),
+    ModelCard('luhua/chinese_pretrain_mrc_roberta_wwm_ext_large', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
+    ModelCard('luhua/chinese_pretrain_mrc_macbert_large', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
+    ModelCard('uer/roberta-base-chinese-extractive-qa', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
+    # ModelCard('mrm8488/spanbert-large-finetuned-squadv2', model=BertForQuestionAnswering, tokenizer=BertTokenizer),
+    ModelCard('schen/longformer-chinese-base-4096', model=LongformerModel, tokenizer=BertTokenizer),
     # https://github.com/CLUEbenchmark/CLUEPretrainedModels
-    # ModelInfo('clue/roberta_chinese_clue_tiny', model=BertModel),
-    # ModelInfo('clue/roberta_chinese_pair_tiny', model=BertModel, tokenizer=BertTokenizer),
-    # ModelInfo('clue/roberta_chinese_3L768_clue_tiny', model=BertModel),
-    # ModelInfo('clue/roberta_chinese_3L312_clue_tiny' , model=BertModel),
-    # ModelInfo('clue/roberta_chinese_clue_large' , model=BertModel),
-    # ModelInfo('clue/roberta_chinese_pair_large', model=BertModel),
-    # ModelInfo('clue/xlnet_chinese_large', model=XLNetLMHeadModel),
+    # ModelCard('clue/roberta_chinese_clue_tiny', model=BertModel),
+    # ModelCard('clue/roberta_chinese_pair_tiny', model=BertModel, tokenizer=BertTokenizer),
+    # ModelCard('clue/roberta_chinese_3L768_clue_tiny', model=BertModel),
+    # ModelCard('clue/roberta_chinese_3L312_clue_tiny' , model=BertModel),
+    # ModelCard('clue/roberta_chinese_clue_large' , model=BertModel),
+    # ModelCard('clue/roberta_chinese_pair_large', model=BertModel),
+    # ModelCard('clue/xlnet_chinese_large', model=XLNetLMHeadModel),
     # https://github.com/renmada/t5-pegasus-pytorch
-    ModelInfo('imxly/t5-pegasus',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
-    ModelInfo('imxly/t5-pegasus-small',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
-    ModelInfo('algolet/mt5-base-chinese-qg',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-T5-77M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-T5-784M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-MegatronT5-770M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),  # something error
-    ModelInfo('IDEA-CCNL/Randeng-Pegasus-238M-Summary-Chinese',  model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-Pegasus-523M-Summary-Chinese',  model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-Pegasus-523M-Chinese',  model=PegasusForConditionalGeneration, tokenizer=AutoTokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-BART-139M',  model=BartForConditionalGeneration, tokenizer=AutoTokenizer),
-    ModelInfo('IDEA-CCNL/Randeng-BART-139M-SUMMARY',  model=BartForConditionalGeneration, tokenizer=AutoTokenizer),
-    ModelInfo('IDEA-CCNL/Wenzhong2.0-GPT2-3.5B',  model=GPT2LMHeadModel, tokenizer=GPT2Tokenizer),
-    ModelInfo('IDEA-CCNL/Wenzhong-GPT2-110M',  model=GPT2LMHeadModel, tokenizer=GPT2Tokenizer),
-    ModelInfo('Langboat/mengzi-t5-base',  model=T5ForConditionalGeneration, tokenizer=T5Tokenizer),
+    ModelCard('imxly/t5-pegasus',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
+    ModelCard('imxly/t5-pegasus-small',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
+    ModelCard('algolet/mt5-base-chinese-qg',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
+    ModelCard('IDEA-CCNL/Randeng-T5-77M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
+    ModelCard('IDEA-CCNL/Randeng-T5-784M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),
+    ModelCard('IDEA-CCNL/Randeng-MegatronT5-770M',  model=MT5ForConditionalGeneration, tokenizer=T5Tokenizer),  # something error
+    ModelCard('IDEA-CCNL/Randeng-Pegasus-238M-Summary-Chinese',  model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),
+    ModelCard('IDEA-CCNL/Randeng-Pegasus-523M-Summary-Chinese',  model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),
+    ModelCard('IDEA-CCNL/Randeng-Pegasus-523M-Chinese',  model=PegasusForConditionalGeneration, tokenizer=AutoTokenizer),
+    ModelCard('IDEA-CCNL/Randeng-BART-139M',  model=BartForConditionalGeneration, tokenizer=AutoTokenizer),
+    ModelCard('IDEA-CCNL/Randeng-BART-139M-SUMMARY',  model=BartForConditionalGeneration, tokenizer=AutoTokenizer),
+    ModelCard('IDEA-CCNL/Wenzhong2.0-GPT2-3.5B',  model=GPT2LMHeadModel, tokenizer=GPT2Tokenizer),
+    ModelCard('IDEA-CCNL/Wenzhong-GPT2-110M',  model=GPT2LMHeadModel, tokenizer=GPT2Tokenizer),
+    ModelCard('Langboat/mengzi-t5-base',  model=T5ForConditionalGeneration, tokenizer=T5Tokenizer),
 
     # https://huggingface.co/uer
-    ModelInfo('uer/chinese_roberta_L-2_H-128', model=BertForMaskedLM, tokenizer=BertTokenizer),
-    ModelInfo('uer/chinese_roberta_L-2_H-768', model=BertForMaskedLM, tokenizer=BertTokenizer),
-    ModelInfo('uer/t5-base-chinese-cluecorpussmall',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
-    ModelInfo('uer/t5-small-chinese-cluecorpussmall',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
-    ModelInfo('uer/bart-base-chinese-cluecorpussmall', BartForConditionalGeneration, BertTokenizer),
-    ModelInfo('uer/gpt2-chinese-poem', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
-    ModelInfo('uer/gpt2-base-chinese-cluecorpussmall', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
-    ModelInfo('uer/gpt2-distil-chinese-cluecorpussmall', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
-    ModelInfo('uer/pegasus-base-chinese-cluecorpussmall', model=PegasusForConditionalGeneration, tokenizer=BertTokenizer),
+    ModelCard('uer/chinese_roberta_L-2_H-128', model=BertForMaskedLM, tokenizer=BertTokenizer),
+    ModelCard('uer/chinese_roberta_L-2_H-768', model=BertForMaskedLM, tokenizer=BertTokenizer),
+    ModelCard('uer/t5-base-chinese-cluecorpussmall',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
+    ModelCard('uer/t5-small-chinese-cluecorpussmall',  model=T5ForConditionalGeneration, tokenizer=BertTokenizer),
+    ModelCard('uer/bart-base-chinese-cluecorpussmall', BartForConditionalGeneration, BertTokenizer),
+    ModelCard('uer/gpt2-chinese-poem', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
+    ModelCard('uer/gpt2-base-chinese-cluecorpussmall', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
+    ModelCard('uer/gpt2-distil-chinese-cluecorpussmall', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
+    ModelCard('uer/pegasus-base-chinese-cluecorpussmall', model=PegasusForConditionalGeneration, tokenizer=BertTokenizer),
 
-    ModelInfo('voidful/albert_chinese_xxlarge', model=BertModel, tokenizer=BertTokenizer),
-    # ModelInfo('wptoux/albert-chinese-large-qa'),
-    ModelInfo("junnyu/roformer_chinese_small", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
-    ModelInfo("junnyu/roformer_chinese_base", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
-    ModelInfo("junnyu/roformer_chinese_char_base", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
-    ModelInfo("ckiplab/gpt2-base-chinese", model=AutoModelForMaskedLM, tokenizer=BertTokenizer),     # https://huggingface.co/ckiplab/gpt2-base-chinese
-    ModelInfo('fnlp/bart-base-chinese', BartForConditionalGeneration, BertTokenizer),
+    ModelCard('voidful/albert_chinese_xxlarge', model=BertModel, tokenizer=BertTokenizer),
+    # ModelCard('wptoux/albert-chinese-large-qa'),
+    ModelCard("junnyu/roformer_chinese_small", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
+    ModelCard("junnyu/roformer_chinese_base", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
+    ModelCard("junnyu/roformer_chinese_char_base", model=RoFormerForMaskedLM, tokenizer=RoFormerTokenizer),
+    ModelCard("ckiplab/gpt2-base-chinese", model=AutoModelForMaskedLM, tokenizer=BertTokenizer),     # https://huggingface.co/ckiplab/gpt2-base-chinese
+    ModelCard('fnlp/bart-base-chinese', BartForConditionalGeneration, BertTokenizer),
     # 古文
-    ModelInfo('ethanyt/guwenbert-base'),         # https://huggingface.co/ethanyt/guwenbert-base
-    ModelInfo('ethanyt/guwenbert-large'),
-    ModelInfo('SIKU-BERT/sikubert'),
-    ModelInfo('SIKU-BERT/sikuroberta'),
-    ModelInfo('uer/gpt2-chinese-ancient', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
+    ModelCard('ethanyt/guwenbert-base'),         # https://huggingface.co/ethanyt/guwenbert-base
+    ModelCard('ethanyt/guwenbert-large'),
+    ModelCard('SIKU-BERT/sikubert'),
+    ModelCard('SIKU-BERT/sikuroberta'),
+    ModelCard('uer/gpt2-chinese-ancient', model=GPT2LMHeadModel, tokenizer=BertTokenizer),
     # English
-    ModelInfo('prajjwal1/bert-tiny'),
-    ModelInfo('bert-base-uncased'),
-    ModelInfo('bert-large-uncased'),
-    ModelInfo('xlm-roberta-large'),
-    ModelInfo('distilroberta-base'),
-    ModelInfo('gpt2-large', model=GPT2LMHeadModel),
-    ModelInfo('gpt2', model=GPT2LMHeadModel),
-    ModelInfo('distilgpt2', model=GPT2LMHeadModel),
-    ModelInfo('microsoft/DialoGPT-large'),
-    ModelInfo('facebook/bart-base', BartForConditionalGeneration, BartTokenizer),
-    ModelInfo('allenai/longformer-base-4096'),
-    ModelInfo('allenai/t5-small-squad11', model=T5ForConditionalGeneration),
-    ModelInfo('allenai/longformer-large-4096-finetuned-triviaqa'),
-    ModelInfo('allenai/unifiedqa-t5-small', model=T5ForConditionalGeneration),
-    ModelInfo('allenai/unifiedqa-t5-11b', model=T5ForConditionalGeneration),
-    ModelInfo('allenai/unifiedqa-t5-large', model=T5ForConditionalGeneration),
-    ModelInfo('allenai/t5-small-squad2-question-generation', model=T5ForConditionalGeneration),
-    ModelInfo('SpanBERT/spanbert-base-cased'),
-    ModelInfo('SpanBERT/spanbert-large-cased'),
-    ModelInfo('tuner007/pegasus_paraphrase', model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),    #https://huggingface.co/tuner007/pegasus_paraphrase
-    ModelInfo('t5-large', model=T5ForConditionalGeneration),
-    ModelInfo('t5-small', model=T5ForConditionalGeneration),
-    ModelInfo('t5-base', model=T5ForConditionalGeneration),
-    ModelInfo('facebook/bart-large',BartForConditionalGeneration, BartTokenizer),
+    ModelCard('prajjwal1/bert-tiny'),
+    ModelCard('bert-base-uncased'),
+    ModelCard('bert-large-uncased'),
+    ModelCard('xlm-roberta-large'),
+    ModelCard('distilroberta-base'),
+    ModelCard('gpt2-large', model=GPT2LMHeadModel),
+    ModelCard('gpt2', model=GPT2LMHeadModel),
+    ModelCard('distilgpt2', model=GPT2LMHeadModel),
+    ModelCard('microsoft/DialoGPT-large'),
+    ModelCard('facebook/bart-base', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('allenai/longformer-base-4096'),
+    ModelCard('allenai/t5-small-squad11', model=T5ForConditionalGeneration),
+    ModelCard('allenai/longformer-large-4096-finetuned-triviaqa'),
+    ModelCard('allenai/unifiedqa-t5-small', model=T5ForConditionalGeneration),
+    ModelCard('allenai/unifiedqa-t5-11b', model=T5ForConditionalGeneration),
+    ModelCard('allenai/unifiedqa-t5-large', model=T5ForConditionalGeneration),
+    ModelCard('allenai/t5-small-squad2-question-generation', model=T5ForConditionalGeneration),
+    ModelCard('SpanBERT/spanbert-base-cased'),
+    ModelCard('SpanBERT/spanbert-large-cased'),
+    ModelCard('tuner007/pegasus_paraphrase', model=PegasusForConditionalGeneration, tokenizer=PegasusTokenizer),    #https://huggingface.co/tuner007/pegasus_paraphrase
+    ModelCard('t5-large', model=T5ForConditionalGeneration),
+    ModelCard('t5-small', model=T5ForConditionalGeneration),
+    ModelCard('t5-base', model=T5ForConditionalGeneration),
+    ModelCard('facebook/bart-large',BartForConditionalGeneration, BartTokenizer),
     # https://huggingface.co/sshleifer
-    ModelInfo('sshleifer/tinier_bart', BartForConditionalGeneration, BartTokenizer),
-    ModelInfo('sshleifer/distilbart-xsum-1-1', BartForConditionalGeneration, BartTokenizer),
-    ModelInfo('sshleifer/distilbart-xsum-12-1', BartForConditionalGeneration, BartTokenizer),
-    ModelInfo('sshleifer/distilbart-xsum-12-6', BartForConditionalGeneration, BartTokenizer),
-    ModelInfo('sshleifer/distilbart-xsum-6-6', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('sshleifer/tinier_bart', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('sshleifer/distilbart-xsum-1-1', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('sshleifer/distilbart-xsum-12-1', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('sshleifer/distilbart-xsum-12-6', BartForConditionalGeneration, BartTokenizer),
+    ModelCard('sshleifer/distilbart-xsum-6-6', BartForConditionalGeneration, BartTokenizer),
 
-    ModelInfo('google/bigbird-roberta-base'),
-    ModelInfo('google/bigbird-roberta-large'),
-    ModelInfo('google/byt5-small',model=T5ForConditionalGeneration,),
-    ModelInfo('google/byt5-base',model=T5ForConditionalGeneration),
-    ModelInfo('google/byt5-large',model=T5ForConditionalGeneration),
-    ModelInfo('google/byt5-xl',model=T5ForConditionalGeneration),
-    ModelInfo('google/byt5-xxl',model=T5ForConditionalGeneration),
-    ModelInfo('google/mt5-small',model=MT5ForConditionalGeneration),
-    ModelInfo('google/mt5-base' ,model=MT5ForConditionalGeneration),
-    ModelInfo('google/mt5-large',model=MT5ForConditionalGeneration),
-    ModelInfo('google/mt5-xxl',model=MT5ForConditionalGeneration),
-    ModelInfo('google/roberta2roberta_L-24_cnn_daily_mail'),
-    ModelInfo('google/bigbird-pegasus-large-arxiv'),
-    # ModelInfo(''),
+    ModelCard('google/bigbird-roberta-base'),
+    ModelCard('google/bigbird-roberta-large'),
+    ModelCard('google/byt5-small',model=T5ForConditionalGeneration,),
+    ModelCard('google/byt5-base',model=T5ForConditionalGeneration),
+    ModelCard('google/byt5-large',model=T5ForConditionalGeneration),
+    ModelCard('google/byt5-xl',model=T5ForConditionalGeneration),
+    ModelCard('google/byt5-xxl',model=T5ForConditionalGeneration),
+    ModelCard('google/mt5-small',model=MT5ForConditionalGeneration),
+    ModelCard('google/mt5-base' ,model=MT5ForConditionalGeneration),
+    ModelCard('google/mt5-large',model=MT5ForConditionalGeneration),
+    ModelCard('google/mt5-xxl',model=MT5ForConditionalGeneration),
+    ModelCard('google/roberta2roberta_L-24_cnn_daily_mail'),
+    ModelCard('google/bigbird-pegasus-large-arxiv'),
+    # ModelCard(''),
 ] 
 
 
@@ -194,7 +194,7 @@ def get_model_url(string):
     Returns:
         str : 本地路径
     """
-    tmp_model = ModelInfo(string)
+    tmp_model = ModelCard(string)
     if tmp_model.is_saved():
         return tmp_model.local_url
     else:
@@ -232,8 +232,23 @@ def save_model(name, model, tokenizer):
         model class
         model tokenizer class 
     """
-    tmp_model = ModelInfo(name, model, tokenizer)
+    tmp_model = ModelCard(name, model, tokenizer)
     tmp_model.save()
+
+
+def hf_download(repo_id, local_dir):
+    """ 
+        调用官方接口，将模型下载到本地目录
+    """
+    from huggingface_hub import snapshot_download
+    snapshot_download(
+        repo_id=repo_id, 
+        allow_patterns=["*.md", "*.txt", "*.json", "*.bin", "*.model"],  # pytorch 
+        ignore_patterns=None,
+        local_dir=local_dir,
+        local_dir_use_symlinks=False
+    )
+
 
 if __name__ == '__main__':
     # for _ in models:

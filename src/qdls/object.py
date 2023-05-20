@@ -4,6 +4,7 @@ import json
 import yaml
 import argparse
 from  argparse import Namespace
+import omegaconf
 from omegaconf import OmegaConf as oc
 
 import torch
@@ -297,7 +298,12 @@ def print_string(string):
 def print_config(config):
     """ 打印字典，config等， 字体颜色为绿色 """
     print("="*80)
-    print(Fore.GREEN, config)
+    if type(config) is omegaconf.dictconfig.DictConfig:
+        config_dict = oc.to_object(config)
+    else:
+        config_dict = namespace2dict(config)
+    s = json.dumps(config_dict, ensure_ascii=False, indent=2)
+    print(Fore.GREEN, s)
     print(Style.RESET_ALL)
     print("="*80)
 
