@@ -290,22 +290,22 @@ class Config(oc):
         return provided, defaults  
 
 
-def print_string(string):
-    """ 两边是==，输入字符串居中，两边各有5个空格，输出字体颜色为黄色 """
-    print(Fore.YELLOW,"="*25 + string.center(len(string)+10,) + "="*25)
-    print(Style.RESET_ALL)
+# def print_string(string):
+#     """ 两边是==，输入字符串居中，两边各有5个空格，输出字体颜色为黄色 """
+#     print(Fore.YELLOW,"="*25 + string.center(len(string)+10,) + "="*25)
+#     print(Style.RESET_ALL)
 
-def print_config(config):
-    """ 打印字典，config等， 字体颜色为绿色 """
-    print("="*80)
-    if type(config) is omegaconf.dictconfig.DictConfig:
-        config_dict = oc.to_object(config)
-    else:
-        config_dict = namespace2dict(config)
-    s = json.dumps(config_dict, ensure_ascii=False, indent=2)
-    print(Fore.GREEN, s)
-    print(Style.RESET_ALL)
-    print("="*80)
+# def print_config(config):
+#     """ 打印字典，config等， 字体颜色为绿色 """
+#     print("="*80)
+#     if type(config) is omegaconf.dictconfig.DictConfig:
+#         config_dict = oc.to_object(config)
+#     else:
+#         config_dict = namespace2dict(config)
+#     s = json.dumps(config_dict, ensure_ascii=False, indent=2)
+#     print(Fore.GREEN, s)
+#     print(Style.RESET_ALL)
+#     print("="*80)
 
 def resume_config(config, path):
     """ 
@@ -333,7 +333,9 @@ def resume_config(config, path):
 
 
 def build_config(d):
-    """ 嵌套的 argparse.Namespace """
+    """ 嵌套的 argparse.Namespace 
+        TODO: move to utils
+    """
     config = Namespace()
     for k,v in d.items():
         if type(v) == dict:
@@ -343,6 +345,9 @@ def build_config(d):
     return config 
     
 def namespace2dict(config):
+    """
+     TODO: move to utils, rename to config2dict
+    """
     d = {}
     for k,v in config.__dict__.items():
         if type(v) is Namespace:
