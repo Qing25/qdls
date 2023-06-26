@@ -51,10 +51,11 @@ def serialize_result(res):
         return str(res)
 
 
-def exec_one_sample(sample, config):
+def exec_one_sample(sample, config, key):
     driver = GraphDatabase.driver(uri=config.neo4j_uri, auth=(config.neo4j_user, config.neo4j_passwd))
 
-    query = sample['pred'] if 'pred' in sample else sample['cypher']
+    # query = sample['pred'] if 'pred' in sample else sample['cypher']
+    query = sample[key]
     # 不是很需要这个了
     # query = fix_illeal_relation(query)    # 对生成的语句进行后处理，In case `` is not generated
     if not syntax_check(query):
@@ -131,26 +132,31 @@ def exec_one_sample(sample, config):
     return matched, result_str
 
 
-def process_execute(queries, nproc=8, config=None):
+def process_execute(queries, nproc=8, config=None, key='cypher'):
     
     assert config is not None, f"config is None, please set config first"
 
     Results = [] 
-    with Pool(nproc) as pool:
-        R = {}
-        for sample in queries:
-            future = pool.apply_async(exec_one_sample, (sample, config))
-            R[future] = sample
-        
-        for future in tqdm(R):
-            try:
-                res = future.get()
-            except Exception as e:
-                print(e)
-                print(R[future])
-                print("+"*80)
-                res = False, f"Neo4jError: {R[future]['pred']}"
-            Results.append(res)
+    if nproc == 1:
+        print_string("sequential execution")
+        for sample in tqdm(queries):
+            Results.append(exec_one_sample(sample, config, key))
+    else:
+        with Pool(nproc) as pool:
+            R = {}
+            for sample in queries:
+                future = pool.apply_async(exec_one_sample, (sample, config, key))
+                R[future] = sample
+            
+            for future in tqdm(R):
+                try:
+                    res = future.get()
+                except Exception as e:
+                    print(e)
+                    print(R[future])
+                    print("+"*80)
+                    res = False, f"Neo4jError: {R[future]['pred']}"
+                Results.append(res)
     assert len(Results) == len(queries), f"{len(R)} != {len(queries)}"
     return Results
 
@@ -166,10 +172,11 @@ def cypher_exec_eval(path, nproc=16, key='pred', resave=False, post_process_fn=N
     data = load_json(path) if type(path) is str else path 
     # queries = [ s['generated'] for s in data]
     # Results = threads_execution(data, nthreads=32)
-    assert post_process_fn is not None, "post_process_fn is None"
+    if post_process_fn is None:
+        print_string("post_process_fn is None, make sure `key` do not need to be processed")
     if post_process_fn is not None:
         data = [ post_process_fn(s) for s in data]
-    Results = process_execute(data, nproc=nproc, config=config)
+    Results = process_execute(data, nproc=nproc, config=config, key=key)
     
     is_right = [ 1 for match, res_str in Results if match is True ]
     acc = 100 * len(is_right)/ len(Results)

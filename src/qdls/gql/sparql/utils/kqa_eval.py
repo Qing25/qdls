@@ -152,6 +152,7 @@ class ValueClass():
 class DataForSPARQL(object):
     def __init__(self, kb_path):
         kb = json.load(open(kb_path))
+        print_string(f"{kb_path} is loaded!")
         self.concepts = kb['concepts']
         self.entities = kb['entities']
 
@@ -271,17 +272,17 @@ class DataForSPARQL(object):
         return facts
 
 
-print_string('loading data...', color='red')
-try:
-    kb = DataForSPARQL("/home/qing/datasets/kqa_pro/kb.json")
-    virtuoso_address = "http://127.0.0.1:28890/sparql"
-    virtuoso_graph_uri = ''
-except Exception as e:
-    print_string('failed to load data', color='red')
-    print_string(" import this file and set `module_name.db, module_name.virtuoso_address, module_name.virtuoso_graph_uri` ")
+# print_string('loading data...', color='red')
+# try:
+#     kb = DataForSPARQL("/home/qing/datasets/kqa_pro/kb.json")
+#     virtuoso_address = "http://127.0.0.1:28890/sparql"
+#     virtuoso_graph_uri = ''
+# except Exception as e:
+#     print_string('failed to load data', color='red')
+#     print_string(" import this file and set `module_name.db, module_name.virtuoso_address, module_name.virtuoso_graph_uri` ")
 
-print_string(f"virtuoso_address: {virtuoso_address}", color='red')
-print_string(f"virtuoso_graph_uri: {virtuoso_graph_uri}", color='red')
+# print_string(f"virtuoso_address: {virtuoso_address}", color='red')
+# print_string(f"virtuoso_graph_uri: {virtuoso_graph_uri}", color='red')
 
 def legal(s):
     # convert predicate and attribute keys to legal format
@@ -385,7 +386,7 @@ class SparqlEngine():
         return node
 
 
-def query_virtuoso(q):
+def query_virtuoso(q, virtuoso_address, virtuoso_graph_uri):
     endpoint = virtuoso_address
     store=sparqlstore.SPARQLUpdateStore(endpoint)
     gs = rdflib.ConjunctiveGraph(store)
@@ -395,7 +396,7 @@ def query_virtuoso(q):
     return res
 
 
-def get_sparql_answer(sparql, data):
+def get_sparql_answer(sparql, data, config):
     """
     data: DataForSPARQL object, we need the key_type
     """
@@ -421,7 +422,7 @@ def get_sparql_answer(sparql, data):
             parse_type = 'attr_{}'.format(t)
 
         parsed_answer = None
-        res = query_virtuoso(sparql)
+        res = query_virtuoso(sparql, config.address, config.uri)
         
         if res.vars:
             res = [[binding[v] for v in res.vars] for binding in res.bindings]
@@ -555,14 +556,14 @@ def post_process(text):
     bingo += chunks[-1]
     return bingo
 
-def exec_sparql(sparql, answer):
+def exec_sparql(sparql, answer, config):
     sparql = post_process(sparql)
-    pred_answer = get_sparql_answer(sparql, kb)
+    pred_answer = get_sparql_answer(sparql, config.kb, config)
     is_match = whether_equal(answer, pred_answer)
     return is_match, pred_answer
 
 
-def sparql_exec_acc(path, key='pred', nproc=1, resave=False):
+def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None):
     """ path: 可以是字符串（读取文件）也可以是读取后的对象list 
         key: 每一个sample字典中, 预测的sparql语句的key
         nproc: 并行处理的进程数
@@ -577,7 +578,7 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False):
                 assert key in sample, f"key `{key}` not in provided data, sample.keys()={sample.keys()}"
                 sparql = sample[key]
                 answer = sample['answer']
-                future = pool.apply_async(exec_sparql, (sparql, answer))
+                future = pool.apply_async(exec_sparql, (sparql, answer, config))
                 R[future] = sample
             
             for future in tqdm(R):
@@ -592,7 +593,7 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False):
             assert key in sample, f"key `{key}` not in provided data, sample.keys()={sample.keys()}"
             sparql = sample[key]
             answer = sample['answer']
-            Results.append(exec_sparql(sparql, answer))
+            Results.append(exec_sparql(sparql, answer, config))
 
     cnt = len(data)
     correct, wrong = 0, 0
@@ -603,8 +604,8 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False):
             wrong += 1
  
 
-    acc = 100 * len(correct)/ cnt
-    print(f"{len(correct)} of {len(Results)} is correct, {acc:.3f};  {wrong} wrong")
+    acc = 100 *  correct/ cnt
+    print(f"{correct} of {cnt} is correct, {acc:.3f};  {wrong} wrong")
 
     if resave:
         if type(resave) is not str:
