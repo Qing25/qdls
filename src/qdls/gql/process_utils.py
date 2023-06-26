@@ -28,7 +28,7 @@ _CY_NODES = [
 _SP_NODES = [
     # 'var',                          # ?v ?pv
     # 'pathPrimary',                  # <pred:value> date name fact_r h t 
-    # 'iri',                          #  <for_work>
+    'iri',                          #  <for_work>
     'string',                       # "a string"
     'numericLiteralUnsigned',       # 1895
     'numericLiteralNegative'        # -192
@@ -119,7 +119,7 @@ def parse_nodes_relations_sparql(sp):
         nonterm_name, values = v 
         if nonterm_name in ["numericLiteralUnsigned", "numericLiteralNegative", "string"]:
             nodes.append( "".join(values) )
-        elif nonterm_name == "not decided":
+        elif nonterm_name in ['iri']:
             relations.append( "".join(values) )
         else:
             raise Exception(f'{nonterm_name} not handled!')

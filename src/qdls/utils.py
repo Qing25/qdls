@@ -46,7 +46,7 @@ def config2dict(config):
     return d 
 
 
-def print_string(string):
+def print_string(string, color="yellow"):
     """ 在命令行以黄色字体打印 string 
         eg: ====================  string  ====================
     """
@@ -57,7 +57,7 @@ def print_string(string):
             raise Exception("Input must be str or can be converted to str")
 
     s = "="*20 + string.center(len(string)+10,) + "="*20
-    cprint(s, "yellow", attrs=["bold"])
+    cprint(s, color, attrs=["bold"])
 
 
 def print_config(config, title=None):

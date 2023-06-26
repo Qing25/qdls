@@ -16,6 +16,21 @@ from ..register import registers
 
 @registers.datamodule.register("base_dm")
 class BaseDataModule(pl.LightningDataModule):
+    """ 
+        config:
+            pretrained
+            data:
+                train_bsz
+                val_bsz
+                test_bsz
+                padding_side
+                collator_name
+                tokenize_fn_name
+                cache_dir
+                force_reload
+        需要先在registers中注册collator和process_function
+        DataBuilder 需要 train_path val_path test_path 或者 dataset_name
+    """
     def __init__(self, config, **kwargs) -> None:
         super().__init__() 
 
@@ -57,12 +72,15 @@ class BaseDataModule(pl.LightningDataModule):
             if mode == 'train':
                 trainset = ds.build('train', self.tokenizer, self.tokenize_fn)
                 valset =  ds.build('val', self.tokenizer, self.tokenize_fn)
-
-                trainset.save_to_disk(self.cached_train)
-                valset.save_to_disk(self.cached_val)
+                
+                if trainset is not None:
+                    trainset.save_to_disk(self.cached_train)
+                if valset is not None:
+                    valset.save_to_disk(self.cached_val)
             elif mode == 'test':
             
                 testset = ds.build('test', self.tokenizer, self.tokenize_fn)
+                assert testset is not None 
                 testset.save_to_disk(self.cached_test)
             else:
                 raise Exception(f'mode {mode} not imple')
@@ -78,7 +96,7 @@ class BaseDataModule(pl.LightningDataModule):
         if stage == 'test' or stage is None:
             self.testset = datasets.load_from_disk(self.cached_test)
         
-        print("End setup")
+        print_string("Datasets setup finished!")
 
     def train_dataloader(self):
         return DataLoader(self.trainset, batch_size=self.config.data.train_bsz,
