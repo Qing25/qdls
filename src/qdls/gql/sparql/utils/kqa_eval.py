@@ -1,58 +1,27 @@
-# -*- coding: utf-8 -*-
-# @File    :   kqa_eval.py
-# @Time    :   2023/06/26 16:05:30
-# @Author  :   Qing 
-# @Email   :   aqsz2526@outlook.com
-######################### docstring ########################
-'''
-    Evaluate functions for kqa pro 
-    需要按照以下链接中的说明修改rdflib包的源码 
-    ! https://github.com/shijx12/KQAPro_Baselines/tree/master/Bart_SPARQL 
-'''
-
-import re 
-import json 
-from datetime import date
-from tqdm import tqdm
-from datetime import date
-from queue import Queue
 
 import rdflib
 from rdflib import URIRef, BNode, Literal, XSD
 from rdflib.plugins.stores import sparqlstore
 from itertools import chain
-
 import os, sys 
-from qdls.data import load_json, save_json
+try:
+    from q_snippets.data import load_json, save_json
+except:
+    from qdls.data import load_json, save_json
+from qdls.gql.sparql.utils.syntax import syntax_check
 from qdls.utils import print_string
-from multiprocessing import Pool 
+from multiprocessing import Pool
+
+# FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+# PROJ_DIR = FILE_DIR[:FILE_DIR.index('src')]
+# PROJ_DIR = "/home/qing/workspace/archive/ACL23"
+# sys.path.append(PROJ_DIR)
 
 
-
-
-def comp(a, b, op):
-    """
-    Args:
-        - a (ValueClass): attribute value of a certain entity
-        - b (ValueClass): comparison target
-        - op: =/>/</!=
-    Example:
-        a is someone's birthday, 1960-02-01, b is 1960, op is '=', then return True
-    """
-    if b.isTime():
-        # Note: for time, 'a=b' actually means a in b, 'a!=b' means a not in b
-        if op == '=':
-            return b.contains(a)
-        elif op == '!=':
-            return not b.contains(a)
-    if op == '=':
-        return a == b
-    elif op == '<':
-        return a < b
-    elif op == '>':
-        return a > b
-    elif op == '!=':
-        return a != b
+import json 
+import re 
+from datetime import date
+from tqdm import tqdm
 
 class ValueClass():
     def __init__(self, type, value, unit=None):
@@ -152,7 +121,6 @@ class ValueClass():
 class DataForSPARQL(object):
     def __init__(self, kb_path):
         kb = json.load(open(kb_path))
-        print_string(f"{kb_path} is loaded!")
         self.concepts = kb['concepts']
         self.entities = kb['entities']
 
@@ -272,17 +240,9 @@ class DataForSPARQL(object):
         return facts
 
 
-# print_string('loading data...', color='red')
-# try:
-#     kb = DataForSPARQL("/home/qing/datasets/kqa_pro/kb.json")
-#     virtuoso_address = "http://127.0.0.1:28890/sparql"
-#     virtuoso_graph_uri = ''
-# except Exception as e:
-#     print_string('failed to load data', color='red')
-#     print_string(" import this file and set `module_name.db, module_name.virtuoso_address, module_name.virtuoso_graph_uri` ")
 
-# print_string(f"virtuoso_address: {virtuoso_address}", color='red')
-# print_string(f"virtuoso_graph_uri: {virtuoso_graph_uri}", color='red')
+# kb = DataForSPARQL(os.path.join(PROJ_DIR, 'data/dataset/kb.json'))
+# kb = DataForSPARQL("/Users/qing/Downloads/kb.json")
 
 def legal(s):
     # convert predicate and attribute keys to legal format
@@ -386,6 +346,7 @@ class SparqlEngine():
         return node
 
 
+
 def query_virtuoso(q, virtuoso_address, virtuoso_graph_uri):
     endpoint = virtuoso_address
     store=sparqlstore.SPARQLUpdateStore(endpoint)
@@ -394,7 +355,6 @@ def query_virtuoso(q, virtuoso_address, virtuoso_graph_uri):
     gs1 = gs.get_context(rdflib.URIRef(virtuoso_graph_uri))
     res = gs1.query(q)
     return res
-
 
 def get_sparql_answer(sparql, data, config):
     """
@@ -422,8 +382,9 @@ def get_sparql_answer(sparql, data, config):
             parse_type = 'attr_{}'.format(t)
 
         parsed_answer = None
-        res = query_virtuoso(sparql, config.address, config.uri)
-        
+
+        res = query_virtuoso(sparql, virtuoso_address=config.virtuoso_address, virtuoso_graph_uri=config.virtuoso_graph_uri)
+
         if res.vars:
             res = [[binding[v] for v in res.vars] for binding in res.bindings]
             if len(res) != 1:
@@ -435,7 +396,7 @@ def get_sparql_answer(sparql, data, config):
         if parse_type == 'name':
             node = res[0][0]
             sp = 'SELECT DISTINCT ?v WHERE {{ <{}> <{}> ?v .  }}'.format(node, SparqlEngine.PRED_NAME)
-            res = query_virtuoso(sp)
+            res = query_virtuoso(sp, virtuoso_address=config.virtuoso_address, virtuoso_graph_uri=config.virtuoso_graph_uri)
             res = [[binding[v] for v in res.vars] for binding in res.bindings]
             name = res[0][0].value
             parsed_answer = name
@@ -458,13 +419,13 @@ def get_sparql_answer(sparql, data, config):
                 sp = 'SELECT DISTINCT ?v WHERE {{ <{}> <{}> ?v .  }}'.format(node, SparqlEngine.PRED_DATE)
             else:
                 raise Exception('unsupported parse type')
-            res = query_virtuoso(sp)
+            res = query_virtuoso(sp, virtuoso_address=config.virtuoso_address, virtuoso_graph_uri=config.virtuoso_graph_uri)
             res = [[binding[v] for v in res.vars] for binding in res.bindings]
             # if there is no specific date, then convert the type to year
             if len(res)==0 and v_type == 'date':
                 v_type = 'year'
                 sp = 'SELECT DISTINCT ?v WHERE {{ <{}> <{}> ?v .  }}'.format(node, SparqlEngine.PRED_YEAR)
-                res = query_virtuoso(sp)
+                res = query_virtuoso(sp, virtuoso_address=config.virtuoso_address, virtuoso_graph_uri=config.virtuoso_graph_uri)
                 res = [[binding[v] for v in res.vars] for binding in res.bindings]
             if v_type == 'quantity':
                 value = float(res[0][2].value)
@@ -478,10 +439,12 @@ def get_sparql_answer(sparql, data, config):
         elif parse_type == 'pred':
             parsed_answer = str(res[0][0])
             parsed_answer = parsed_answer.replace('_', ' ')
-        return parsed_answer
+        # return parsed_answer
     except Exception as e:
-        # print(e)
-        return None
+        print(e)
+        parsed_answer = None 
+    # print(parsed_answer)
+    return parsed_answer
 
 def whether_equal(answer, pred):
     """
@@ -532,8 +495,10 @@ def whether_equal(answer, pred):
     else:
         return answer == pred
 
+
 def post_process(text):
     """
+    针对BART生成结果的预处理
     字符串提取出来，其余部分是chunks， 需要增加?和.前的空格， 最后再组装起来即可
     !!!!!!!!!  只需要处理生成的， trainset里的就不用处理了
     """
@@ -556,18 +521,27 @@ def post_process(text):
     bingo += chunks[-1]
     return bingo
 
-def exec_sparql(sparql, answer, config):
-    sparql = post_process(sparql)
-    pred_answer = get_sparql_answer(sparql, config.kb, config)
+def pseudo_post_process(text):
+    return text 
+
+def exec_sparql(sparql, answer, config, kb, process_fn=pseudo_post_process):
+    sparql = process_fn(sparql)
+    # print("==>", sparql)
+    pred_answer = get_sparql_answer(sparql, kb, config)
     is_match = whether_equal(answer, pred_answer)
+    # print(sparql)
+    # print(is_match, pred_answer, answer)
     return is_match, pred_answer
 
 
-def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None):
+def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None, kb=None, process_fn=pseudo_post_process):
     """ path: 可以是字符串（读取文件）也可以是读取后的对象list 
         key: 每一个sample字典中, 预测的sparql语句的key
         nproc: 并行处理的进程数
         resave: bool or string  是否重新保存结果, 保存在原目录, 文件名前加上exec_
+        config: 配置文件, 主要是virtuoso的 address 和 graph uri
+        kb: 知识库
+        process_fn: 对sparql进行处理的函数
     """
     data = load_json(path) if type(path) is str else path 
     Results = []
@@ -578,7 +552,7 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None):
                 assert key in sample, f"key `{key}` not in provided data, sample.keys()={sample.keys()}"
                 sparql = sample[key]
                 answer = sample['answer']
-                future = pool.apply_async(exec_sparql, (sparql, answer, config))
+                future = pool.apply_async(exec_sparql, (sparql, answer, config, kb, process_fn))
                 R[future] = sample
             
             for future in tqdm(R):
@@ -593,7 +567,7 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None):
             assert key in sample, f"key `{key}` not in provided data, sample.keys()={sample.keys()}"
             sparql = sample[key]
             answer = sample['answer']
-            Results.append(exec_sparql(sparql, answer, config))
+            Results.append(exec_sparql(sparql, answer, config, kb, process_fn))
 
     cnt = len(data)
     correct, wrong = 0, 0
@@ -626,13 +600,3 @@ def sparql_exec_acc(path, key='pred', nproc=1, resave=False, config=None):
 
 if __name__ == '__main__':
     pass 
-    """
-    from qdls.gql.sparql.utils import kqa_eval
-    kqa_eval.kb = DataForSPARQL("/home/qing/datasets/kqa_pro/kb.json")
-    kqa_eval.virtuoso_address = "http://127.0.0.1:28890/sparql"
-    kqa_eval.virtuoso_graph_uri = 'xxx'
-
-    """ 
-
-
-
