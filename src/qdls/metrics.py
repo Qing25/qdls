@@ -4,6 +4,9 @@ import collections
 import string
 import numpy as np
 from sklearn.metrics import classification_report
+from tqdm import tqdm 
+
+from .data import load_json
 
 def classification_matrix(gold_ids, pred_ids, label_names, save_file):
     """
@@ -80,6 +83,49 @@ def prec_at_k(output, target, top_k=(1,)):
         res = res[0]
 
     return res
+
+
+class Evaluator:
+    def __init__(self) -> None:
+        pass
+
+def parallel_eval(path, lang='sparql', save_res=None, nproc=16):
+    """ 
+    
+    """
+    data = load_json(path) if type(path) is str else path 
+
+        # 3.parallel match 
+    results = []
+    if nproc == 1:
+        for sample in data:
+            is_match = _single_match(sample['generated'],sample[lang],lex_fn)
+            results.append(sample)
+    else:
+        with Pool(nproc) as pool:
+            R = {}
+            for sample in data:
+                if lang in sample:
+                    future = pool.apply_async(_single_match, args=(sample['generated'],sample[lang],lex_fn))
+                elif 'LF' in sample: # for graphqir setting
+                    future = pool.apply_async(_single_match, args=(sample['generated'],sample['LF'],lex_fn))
+                else:
+                    raise Exception(f"Unmatched case: {lang} while {sample.keys()}")
+                R[future] = sample
+
+            for future in tqdm(R):
+                try:
+                    is_match = future.get()
+                    sample = R[future]
+                    if type(is_match) is tuple:
+                        sample['em'] = is_match[0] 
+                        sample['bleu'] = is_match[1]
+                    else:
+                        sample['em'] = is_match 
+                    results.append(sample)
+                except Exception as e:
+                    print(e)
+
 
 if __name__ == '__main__':
     f1 = compute_f1("你好？hh", "NO go away 不好")

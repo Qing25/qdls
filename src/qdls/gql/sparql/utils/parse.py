@@ -32,3 +32,44 @@ def parse_sparql(sparql, tree_only=False):
         print(token, "\t", par)
     s = tree.toStringTree(recog=parser)
     return tree, s, parts, parents 
+
+def get_sparql_nodes(tree, parser):
+    """遍历语法树 返回树字符串、节点列表、  
+
+    Args:
+        tree: 
+        parser: 
+    """
+    parts, parents = [], []
+    parse_layer(tree, parser.ruleNames, parts, parents)
+    s = tree.toStringTree(recog=parser)
+    return s, parts, parents 
+
+def split_query(query, lexer=None):
+    """使用lexer将查询语句分词（语义单元级别
+
+    Args:
+        query: 查询字符串，可以包含语法错误
+        lexer: pygments的lexer. Defaults to cy_lexer.
+
+    Returns:
+        a list of strings 
+    """
+    if lexer is None:
+        try:
+            from pygments.lexers.rdf import SparqlLexer as SPLexer
+            lexer = SPLexer()
+        except:
+            raise Exception(f"lexer is not set!")
+
+    pred_units = []
+    for tag, substr in lexer.get_tokens(query):
+        if tag is Token.Error:
+            # return -1
+            pred_units.append("错")
+        # print(tag, substr)
+        if substr.strip() != "":
+            pred_units.append(substr)
+
+    return pred_units
+

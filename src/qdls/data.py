@@ -37,6 +37,15 @@ def load_json(path):
     print(f"{path} loaded with {len(obj)} samples!")
     return obj
 
+def load_jsonl(path):
+    R = []
+    with open(path, 'r', encoding='utf8') as f:
+        for line in f:
+            R.append(json.loads(line))
+    print(f"{path} loaded with {len(R)} samples!")
+    return R
+
+
 def load_yaml(path):
     with open(path) as fin:
         return yaml.safe_load(fin)
@@ -338,6 +347,7 @@ def recursive_file_find(root):
             R.append(abs_path)
         else:
             R.extend(recursive_file_find(abs_path))
+    R = sorted(R)
     return R
 
 

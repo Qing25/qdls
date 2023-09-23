@@ -38,8 +38,12 @@ class BaseDataModule(pl.LightningDataModule):
         print_string("configuration of datamodule")
         print_config(self.config)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(config.pretrained)
-        self.tokenizer.padding_side = config.data.padding_side
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            config.pretrained,
+            trust_remote_code=True, 
+            use_fast=False,
+            padding_side = config.data.padding_side
+        )
         
         # 有些模型的tokenizer没有设置 pad token
         if self.tokenizer.pad_token_id is None:

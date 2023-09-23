@@ -1,0 +1,54 @@
+
+mode: train
+version: null 
+pretrained: /pretrains/pt/fb_bart
+
+model_type: seq2seq_lm
+model_name: bart_base
+use_lora: False
+
+optim:
+  lr: 3e-5
+  warmup_rate: 0.1
+  weight_decay: 1e-5
+  
+
+lora:
+  RANK: 8
+  ALPHA: 32
+  DROPOUT: 0.05
+
+data:
+
+  train_path: null 
+  val_path:  null 
+  test_path: null 
+
+  collator_name: seq2seq_collator
+  tokenize_fn_name: kqa_pseudo_target_tokenization_seq2seq
+  padding_side: right                
+ 
+  train_bsz: 8
+  val_bsz: 8
+  test_bsz: 128
+  num_proc: 8
+  cache_dir: ./cached/default
+  force_reload: True
+
+trainer:
+  accelerator: gpu
+  num_nodes: 1
+  devices: 1
+  strategy: auto                  # deepspeed_stage_2
+  # strategy: deepspeed_stage_2
+  precision: bf16-mixed               # pl: '16-mixed', 'bf16-mixed', '32-true', '64-true', 64, 32, 16, '64', '32', '16', 'bf16'
+  # precision: '32-true' 
+  max_epochs: 10
+  # max_steps: 10000
+  val_check_interval: 1
+  accumulate_grads: 1
+
+pred:
+  LORA_WEIGHTS: null 
+  ckpt_path: null 
+  result_path:  null 

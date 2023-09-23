@@ -83,6 +83,7 @@ def parse_skeleton(tree, parts, ruleNames, idx2value, lang='sparql'):
 
 def parse_nodes_relations(cy):
     """
+    从Cypher中解析出节点和关系
     nodes:      ['{name:"human"}', '{value:"TheOliverStone"}', '{name:"Nixon"}', '{name:"Twitter_username"}']
     relations:  ['[:instance_of]', '[:Twitter_username]', '[:director]', '[:fact_h]', '[:fact_t]', '[:fact_r]', '[:number_of_subscribers]']
     """
@@ -109,6 +110,11 @@ def parse_nodes_relations(cy):
     return nodes, relations 
 
 def parse_nodes_relations_sparql(sp):
+    """ 
+        从sparql中解析出节点和关系
+        nodes:      ['"human"', '"TheOliverStone"', '"Nixon"', '"Twitter_username"']
+        relations:  ['<instance_of>', '<Twitter_username>', '<director>', '<fact_h>', '<fact_t>', '<fact_r>', '<number_of_subscribers>']
+    """
     tree, parser = parse_sparql(sp,True)
     parts, d = [], {} 
     parse_skeleton(tree, parts, parser.ruleNames, d)

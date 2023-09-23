@@ -15,12 +15,12 @@ class MyLexerErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         raise Exception(f"Lexer Error:{msg}\n{e}\n{column}\n{line}\n{offendingSymbol}")
 
-def syntax_check(cypher):
+def syntax_check(sparql):
     """
-        using antlr4 to pre-check if generated cypher is syntax correct
+        using antlr4 to pre-check if generated sparql is syntax correct
         using self-defined ErrorListener to avoid console output
     """
-    input_stream = InputStream(cypher)
+    input_stream = InputStream(sparql)
     lexer = SparqlLexer(input_stream)
     lexer._listeners = []
     lexer.addErrorListener(MyLexerErrorListener())
