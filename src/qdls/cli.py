@@ -18,16 +18,18 @@ def copy_to_cwd(source):
     """ 
         将source目录下的所有内容复制到cwd目录中
         等价于 cp -r source/* ./
+
+        TODO: 实际build python包的时候，空目录不被包含在内
     """
-    for root, dirs, files in os.walk(source):
-        for file in files:
-            src_file = os.path.join(root, file)
+    for file in os.listdir(source):
+        
+        abs_path = os.path.join(source, file)
+        if os.path.isfile(abs_path):
             dst_file = os.path.join(os.getcwd(), file)
-            shutil.copyfile(src_file, dst_file)
-        for dir in dirs:
-            src_dir = os.path.join(root, dir)
-            dst_dir = os.path.join(os.getcwd(), dir)
-            shutil.copytree(src_dir, dst_dir)
+            shutil.copyfile(abs_path, dst_file)
+        if os.path.isdir(abs_path):
+            dst_dir = os.path.join(os.getcwd(), file)
+            shutil.copytree(abs_path, dst_dir)
  
 
 def main():
