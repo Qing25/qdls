@@ -5,7 +5,7 @@
 # @Email   :   aqsz2526@outlook.com
 ######################### docstring ########################
 '''
-
+用于实现qinit命令
 '''
 
 import os

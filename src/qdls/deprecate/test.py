@@ -10,7 +10,7 @@ import abc
 import torch
 from torch.utils.data import DataLoader
 import datasets
-from .data import load_json, save_json
+from ..data import load_json, save_json
 
 class GenerationPipeline():
     """ 传入model 和 tokenizer

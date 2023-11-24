@@ -79,5 +79,16 @@ def print_config(config, title=None):
     print_string("END OF CONFIG")
 
 
+def namespace2dict(config):
+    """ 将 argparse.Namespace 转换为 dict
+    """
+    d = {}
+    for k,v in config.__dict__.items():
+        if type(v) is Namespace:
+            d[k] = namespace2dict(v)
+        else:
+            d[k] = v 
+    return d 
+
 
 

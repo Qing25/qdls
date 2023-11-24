@@ -81,7 +81,7 @@ def parse_skeleton(tree, parts, ruleNames, idx2value, lang='sparql'):
                 parse_skeleton(child, parts, ruleNames, idx2value, lang=lang)
 
 
-def parse_nodes_relations(cy):
+def parse_nodes_relations_cql(cy):
     """
     从Cypher中解析出节点和关系
     nodes:      ['{name:"human"}', '{value:"TheOliverStone"}', '{name:"Nixon"}', '{name:"Twitter_username"}']
@@ -151,14 +151,19 @@ def tokenize_sequence(tokenizer, list_of_str):
 
 
 
-def tokenize_with_type_ids(tokenizer, input_ids, cypher, offsets):
+def tokenize_with_type_ids(tokenizer, input_ids, gql, offsets, lang='cypher'):
     """ 
         0 for normal, 1 for node , 2 for relation
     """
     node_target = [0 for _ in input_ids]
     rel_target = [0 for _ in input_ids]
 
-    nodes, relations = parse_nodes_relations(cypher)
+    if lang == 'cypher':
+        nodes, relations = parse_nodes_relations_cql(gql)
+    elif lang == 'sparql':
+        nodes, relations = parse_nodes_relations_sparql(gql)
+    else:   
+        raise Exception(f"{lang} not supported!")
 
     # for x in nodes:
     #     flag = False
@@ -169,12 +174,12 @@ def tokenize_with_type_ids(tokenizer, input_ids, cypher, offsets):
     #             rel_target[i:i+l] = [1 for _ in s]
     #             flag = True
     #     if flag == False:
-    #         raise Exception(f"No matched: {x} in {cypher}")
+    #         raise Exception(f"No matched: {x} in {gql}")
     
     for n in nodes:
-        s = cypher.index(n)
+        s = gql.index(n)
         e = s+len(n)
-        # print(s,e, cypher[s:e])
+        # print(s,e, gql[s:e])
         ts, te = None, None
         for i,(_s,_e) in enumerate(offsets):
             if _s == s or (_s < s <= _e):
@@ -182,14 +187,14 @@ def tokenize_with_type_ids(tokenizer, input_ids, cypher, offsets):
             if _e == e or (_s <= e < _e):
                 te = i 
         if ts is None or te is None:
-            raise Exception(f"No matched: {n} in {cypher}\n{(s,e)} | {(ts, te)} not in {offsets}")
+            raise Exception(f"No matched: {n} in {gql}\n{(s,e)} | {(ts, te)} not in {offsets}")
         else:
             node_target[ts:te+1] = [1 for _ in range(ts,te+1)]
 
     for n in relations:
-        s = cypher.index(n)
+        s = gql.index(n)
         e = s+len(n)
-        # print(s,e, cypher[s:e])
+        # print(s,e, gql[s:e])
         ts, te = None, None
         for i,(_s,_e) in enumerate(offsets):
             if _s == s or (_s < s <= _e):
@@ -197,7 +202,7 @@ def tokenize_with_type_ids(tokenizer, input_ids, cypher, offsets):
             if _e == e or (_s <= e < _e):
                 te = i 
         if ts is None or te is None:
-            raise Exception(f"No matched: {n} in {cypher}\n{(s,e)} | {(ts, te)} not in {offsets}")
+            raise Exception(f"No matched: {n} in {gql}\n{(s,e)} | {(ts, te)} not in {offsets}")
         else:
             rel_target[ts:te+1] = [1 for _ in range(ts,te+1)]
             
