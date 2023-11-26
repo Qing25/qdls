@@ -99,8 +99,6 @@ class BaseData:
     
 
 
-
-
 def span_decode(start_logits, end_logits, cls_logits=None, max_a_len=512, samples=None, offset_mappings=None, use_cls=True, no_answer=""):
     """
 
