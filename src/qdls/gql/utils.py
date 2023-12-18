@@ -2,16 +2,6 @@
 from antlr4.tree.Tree import TerminalNodeImpl
 from nltk import Tree
 
-from .cypher.utils.parse import split_query as split_cypher
-from .sparql.utils.parse import split_query as split_sparql
-
-def split_query(query, lang='cypher'):
-    if lang == 'cypher':
-        return split_cypher(query)
-    elif lang == 'sparql':
-        return split_sparql(query)
-    else:
-        raise Exception("lang should be cypher or sparql")
 
 def parse_layer(tree, rule_names, parts, parents, indent = 0):
     """ 遍历树，保存叶子结点 """

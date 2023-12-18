@@ -13,11 +13,11 @@ import datasets
 from .base import BaseEvalutor
 from .metric_fns import calc_metrics_per_sample
 
-neo4j_config = Namespace(
+example_neo4j_config = Namespace(
     neo4j_uri="neo4j://$IP:$PORT", neo4j_user="neo4j", neo4j_passwd="kqa", timeout=3
 )
 
-virtuoso_config = Namespace(
+example_virtuoso_config = Namespace(
     virtuoso_address = "http://127.0.0.1:28890/sparql",
     virtuoso_graph_uri = 'kqaspcy'
 )
@@ -99,7 +99,7 @@ class KqaAutoEvaluator(BaseEvalutor):
         return len(sample['program'])
     
     def length_to_sampleids(self):
-        """ 
+        """ 按照program（KoPL）的长度，分组 sample_id
         2 452 0.051
         3 1890 0.266
         4 2414 0.541
@@ -131,9 +131,27 @@ class KqaAutoEvaluator(BaseEvalutor):
                 scores[m].append(float(sample.get(m, 0)))
         return {k:sum(v)/L for k,v in scores.items()}
     
+    @staticmethod
+    def complexity_fn(length2sids):
+        """ 划分困难的标准 """
+        Easy, Medium, Hard = [], [], [] 
+        for k,v in length2sids.items():
+            if k <=3:
+                Easy.extend(v)
+            elif k <= 6:
+                Medium.extend(v)
+            else:
+                Hard.extend(v)
+
+        return Easy, Medium, Hard
+    
     def detailed_length_metrics(self):
-        for k,v in self.length2sids.items():
-            print(k, len(v), self.calc_marco_metrics(v))
+        """ 将问题按照长度分类，计算每个类别的问题的指标 """
+        Easy, Medium, Hard = self.complexity_fn(self.length2sids)
+        Easy_metrics = self.calc_marco_metrics(Easy)
+        Medium_metrics = self.calc_marco_metrics(Medium)
+        Hard_metrics = self.calc_marco_metrics(Hard)
+        return Easy_metrics, Medium_metrics, Hard_metrics
 
     def exec_results(self):
         num = sum([x['exec_acc'] for k,x in self.id2sample.items()])

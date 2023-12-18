@@ -5,13 +5,19 @@ build-backend = "hatchling.build"
 
 [project]
 name = "qdls"
-version = "0.0.8"
+version = "0.1.1"
 authors = [
   { name="Qing25", email="aqsz2526@outlook.com" },
 ]
 description = "Q-Deep Learning Snippets, my working code snippets"
 readme = "README.md"
 requires-python = ">=3.8"
+dependencies = [
+    "fire",
+    "tqdm",
+    "termcolor",
+    "omegaconf"
+]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",

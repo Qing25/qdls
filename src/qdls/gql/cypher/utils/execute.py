@@ -1,3 +1,4 @@
+import neo4j
 from neo4j.time import DateTime
 from neo4j import GraphDatabase, Query
 import neo4j.exceptions
@@ -8,7 +9,31 @@ from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor
 
 from argparse import Namespace
-    
+
+import signal
+class TimeoutError(Exception):
+    pass
+
+# 如果内置的timeout不好用，可以使用这个
+def timeout(seconds):
+    def decorator(func):
+        def handler(signum, frame):
+            raise TimeoutError("Function call timed out")
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, handler)
+            signal.alarm(seconds)
+
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)  # 重置信号
+
+            return result
+
+        return wrapper
+
+    return decorator    
 
 def query_neo4j(query, driver, timeout=10):
     with driver.session(database='neo4j') as session:
@@ -50,14 +75,10 @@ def exec_single_query(query, config):
         return:
             Exception 或 list
     """
-
     driver = GraphDatabase.driver(uri=config.neo4j_uri, auth=(config.neo4j_user, config.neo4j_passwd))
     with driver.session(database="neo4j") as session:
-        try:
-            q = Query(query, timeout=config.timeout)
-            res = session.run(q).data()
-        except Exception as e:
-            return e
+        q = Query(query, timeout=config.timeout)
+        res = session.run(q).data()
         return res
 
 def threads_execution(queries, nthreads=16, config=None):
@@ -113,16 +134,17 @@ def process_execute(queries, nproc=8, config=None):
     return Results
 
     
-def make_neo4j_date_serializale(obj):
+def neo4j_data_serializable(obj):
     if type(obj) is DateTime:
         dt = obj
         return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute,
                         int(dt.second), int(dt.second * 1000000 % 1000000))
+    elif type(obj) is neo4j.time.Date:
+        return obj.isoformat()
     elif type(obj) is dict:
-        return { k : make_neo4j_date_serializale(v) for k,v in obj.items()}
+        return { k : neo4j_data_serializable(v) for k,v in obj.items()}
     elif type(obj) is list:
-        return [ make_neo4j_date_serializale(_) for _ in obj]
+        return [ neo4j_data_serializable(_) for _ in obj]
     else:
         return obj  
     
-

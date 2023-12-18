@@ -22,6 +22,29 @@ from tqdm import tqdm
 
 from qdls.utils import print_string
 
+import json 
+from neo4j import GraphDatabase, Query
+from .execute import timeout
+
+
+def exec_single_query(query, config):
+    """ 
+        neo4j 的 driver 是线程安全的，通过传入的config参数在每个线程创建一个driver连接
+            ref: https://community.neo4j.com/t5/drivers-stacks/python-generator-already-executing/m-p/40421
+
+        return:
+            返回查询的结果
+            超时等 Exception 不处理 
+    """
+
+    driver = GraphDatabase.driver(uri=config.neo4j_uri, auth=(config.neo4j_user, config.neo4j_passwd))
+    with driver.session(database="neo4j") as session:
+        q = Query(query, timeout=config.timeout)
+        res = session.run(q).data()
+        return res
+
+
+
 units = ['metre', 'pound', 'minute', 'United States dollar', 'mile', '1', 'centimetre', 'square metre', 'square kilometre', 
 'hour', 'second', 'kilogram', 'inch', 'hertz', 'foot', 'Japanese yen', 'year', 'square mile', 'kilometre', 'act', 'audio track',
  'millimetre', 'Danish krone', 'hectare', 'euro', 'Argentine peso', 'beats per minute', 'Nigerian naira', 'barrels per day', 
@@ -50,18 +73,9 @@ def serialize_result(res):
     else:
         return str(res)
 
-
-def exec_one_sample(sample, config, key):
-    driver = GraphDatabase.driver(uri=config.neo4j_uri, auth=(config.neo4j_user, config.neo4j_passwd))
-
-    # query = sample['pred'] if 'pred' in sample else sample['cypher']
-    query = sample[key]
-    # 不是很需要这个了
-    # query = fix_illeal_relation(query)    # 对生成的语句进行后处理，In case `` is not generated
-    if not syntax_check(query):
-        return False, "syntax pre-check failed"
-    ans = sample.get('answer', None)
-    unit  = None                           # 答案中可能有单位
+def compare_answer(res, ans, query):
+    
+    unit  = None  
     if ans is not None:
         if query.strip()[-7:] == "type(p)" or query.strip()[-10:] == "type ( p )": #问的是关系
             if ans == "position played on team / speciality":
@@ -70,66 +84,56 @@ def exec_one_sample(sample, config, key):
                 ans = ans.replace(" ", "_")
             if "-" in ans or "(" in ans or "\xa0" in ans or "." in ans or "'" in ans:
                 ans = f"`{ans}`"
-        # elif any(u in ans for u in units):  # 答案中带有关系
-        #     try:
-        #         n, *unit_parts = ans.split(" ")
-        #         ans = f'{float(n)}'
-        #         unit = " ".join(unit_parts)
-        #     except:
-        #         pass 
-        elif any(u in ans for u in units) and " " in ans:  # 答案中包含单位, fix_bug:有单位则须有空格
-            if "1" in ans and ans.replace(" ", "").isnumeric():  # ISBN 等如 '0000 0000 4361 9306'
-                pass 
-            else:
-                try:
-                    n, *unit_parts = ans.split(" ")
-                    unit = " ".join(unit_parts)
-                    if unit in units:
-                        ans = f'{float(n)}'
-                except:
-                    # print(f"execution answer units converting failed: {ans}, {[ u for u in units if u in ans]}")
+            elif any(u in ans for u in units) and " " in ans:  # 答案中包含单位, fix_bug:有单位则须有空格
+                if "1" in ans and ans.replace(" ", "").isnumeric():  # ISBN 等如 '0000 0000 4361 9306'
                     pass 
-    # 开始执行
-    matched = None
-    with driver.session(database='neo4j') as session:
-        try:
-            q = Query(query, timeout=config.timeout)
-            res = session.run(q).data()
-
-        except neo4j.exceptions.CypherSyntaxError as e:
-            # print(query, " ||| ", e)
-            res = "syntax: " + query 
-            return False,  res
-        except neo4j.exceptions.DatabaseError as e:
-            return False, "db error incomplete: "+ query
-        
-        result_str = str(serialize_result(res))
-        
-        if len(res) == 0:
-            if ans == 'no':
-                matched = True 
-            else:
-                # return "no result: " + query, matched
-                matched = False
-        elif ans is None:
-            # 没有提供答案，只返回查询结果
-            return  None, res 
-        else:
-            # res  = str(res[0]) + "query: "+ query
-            if ans in result_str:
-                if unit is not None and unit not in result_str:
-                    matched = False
                 else:
-                    matched = True
-            elif ans == 'no' and ('False' in result_str or "None" in result_str):  # 值节点不存在该属性名，则对应null
-                matched = True 
-            elif ans == 'yes' and 'True' in result_str:
-                matched = True 
-            else:
+                    try:
+                        n, *unit_parts = ans.split(" ")
+                        unit = " ".join(unit_parts)
+                        if unit in units:
+                            ans = f'{float(n)}'
+                    except:
+                        # print(f"execution answer units converting failed: {ans}, {[ u for u in units if u in ans]}")
+                        pass 
+    result_str = str(serialize_result(res))
+    if len(res) == 0:
+        matched = True if ans == 'no' else False # 查询不到结果 答案是 no 时视为匹配
+    elif ans is None:
+        matched = False
+    else:
+        if ans in result_str:
+            if unit is not None and unit not in result_str:
                 matched = False
-    driver.close()
-    # 返回查询结果，以及是否匹配成功（结果正确）
-    return matched, result_str
+            else:
+                matched = True
+        elif ans == 'no' and ('False' in result_str or "None" in result_str):  # 值节点不存在该属性名，则对应null
+            matched = True 
+        elif ans == 'yes' and 'True' in result_str:
+            matched = True 
+        else:
+            matched = False
+    
+    return matched 
+
+def exec_one_sample_cypher(sample, config, key='pred'):
+    """ 不进行 try except 处理，直接抛出异常 """
+    if key not in sample:
+        return False, "no_pred", []
+    query = sample[key]
+    res = []
+    if not syntax_check(query)[0]:
+        is_correct = False
+        exec_info = 'syntax_error'
+    else:        
+        res = exec_single_query(query, config)
+        is_correct = compare_answer(res, sample.get('answer', None), query)
+        exec_info = 'match' if is_correct else 'mismatch'
+
+    return is_correct, exec_info, json.dumps(res, ensure_ascii=False, default=str)
+
+
+
 
 
 def process_execute(queries, nproc=8, config=None, key='cypher'):
@@ -140,12 +144,12 @@ def process_execute(queries, nproc=8, config=None, key='cypher'):
     if nproc == 1:
         print_string("sequential execution")
         for sample in tqdm(queries):
-            Results.append(exec_one_sample(sample, config, key))
+            Results.append(exec_one_sample_cypher(sample, config, key))
     else:
         with Pool(nproc) as pool:
             R = {}
             for sample in queries:
-                future = pool.apply_async(exec_one_sample, (sample, config, key))
+                future = pool.apply_async(exec_one_sample_cypher, (sample, config, key))
                 R[future] = sample
             
             for future in tqdm(R):

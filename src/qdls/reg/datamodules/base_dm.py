@@ -36,12 +36,12 @@ class BaseDataModule(pl.LightningDataModule):
 
         self.config = config 
         print_string("configuration of datamodule")
-        print_config(self.config)
+        print_config(self.config.data)
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             config.pretrained,
             trust_remote_code=True, 
-            use_fast=False,
+            use_fast=getattr(config.data, 'use_fast', False),
             padding_side = config.data.padding_side
         )
         

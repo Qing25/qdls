@@ -47,7 +47,7 @@ def get_cypher_nodes(tree, parser):
     s = tree.toStringTree(recog=parser)
     return s, parts, parents 
 
-def split_query(query, lexer=None):
+def split_cypher(query, lexer=None):
     """使用lexer将查询语句分词（语义单元级别
 
     Args:

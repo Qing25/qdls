@@ -11,7 +11,7 @@ from qdls.reg.register import Register
 from qdls.gql.cypher.utils.syntax import syntax_check as syntax_check_cypher
 from qdls.gql.sparql.utils.syntax import syntax_check as syntax_check_sparql
 
-from qdls.gql.cypher.utils.kqa_eval import exec_one_sample as exec_one_sample_cypher
+from qdls.gql.cypher.utils.kqa_eval import exec_one_sample_cypher
 from torchmetrics.functional import sacre_bleu_score
 
 from pygments.lexers import get_lexer_by_name
@@ -23,8 +23,6 @@ cy_lexer = get_lexer_by_name('py2neo.cypher') # pip install py2neo to fix
 
 metric_fns = Register('metric_fns')
 
-# from .utils import detect_query_language, postprocess_sparql_tokens
-
 @metric_fns.register("exact_match")
 def match_query(pred, gold, lexer='cypher', verbose=False):
     """ 将cypher or sparql 语言解析为语义单元，比较是否匹配
@@ -32,12 +30,15 @@ def match_query(pred, gold, lexer='cypher', verbose=False):
     """
     lexer = sp_lexer if lexer == 'sparql' else cy_lexer
     pred_units = []
-    for tag, substr in lexer.get_tokens(pred):
-        if tag is Token.Error:
-            return 0
-        # print(tag, substr)
-        if substr.strip() != "":
-            pred_units.append(substr)
+    try:
+        for tag, substr in lexer.get_tokens(pred):
+            if tag is Token.Error:
+                return 0
+            # print(tag, substr)
+            if substr.strip() != "":
+                pred_units.append(substr)
+    except Exception as e:
+        return 0 # 语法错误,无法lex
     gold_units = [ substr for tag, substr in lexer.get_tokens(gold) if substr.strip() != "" ]
     res = (gold_units == pred_units)
     if res:
@@ -50,13 +51,19 @@ def match_query(pred, gold, lexer='cypher', verbose=False):
 
 def executable_fn_cypher(pred):
     """ 判断预测的是否可执行 """
-    flag, tree, parser = syntax_check_cypher(pred)
+    try:
+        flag, tree, parser = syntax_check_cypher(pred)
+    except:
+        flag = False
     return 1.0 if flag else 0.0
 
 
 def executable_fn_sparql(pred):
     """ 判断预测的是否可执行 """
-    flag, tree, parser = syntax_check_sparql(pred)
+    try:
+        flag, tree, parser = syntax_check_sparql(pred)
+    except:
+        flag = False
     return 1.0 if flag else 0.0
 
 @metric_fns.register("executable")
@@ -73,7 +80,6 @@ def executable_fn(pred, lang):
 def bleu_fn(pred, refs):
     """ 默认是用 mteval-v13a 进行分词 return bleu-4 """
     return sacre_bleu_score([pred], [refs], tokenize='char').item()
-
 
 
 def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
@@ -100,9 +106,14 @@ def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
 
     if 'is_correct' in metrics or 'exec_info' in metrics:
         assert ref_key in ['cql', 'cypher'], f"only cql or cypher is supported, but got {ref_key}"
-        is_correct, info = exec_one_sample_cypher(sample, neo4j_config, key='pred')
+        try:
+            is_correct, info, results = exec_one_sample_cypher(sample, neo4j_config, key='pred')
+        except Exception as e:
+            print(e)
+            is_correct, info, results = False, "Timeout", '[]'
         sample['is_correct'] = is_correct
         sample['exec_info'] = info
+        sample['exec_results'] = results
 
     # import pdb;pdb.set_trace();
     return sample

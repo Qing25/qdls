@@ -26,6 +26,7 @@ data:
 
   collator_name: seq2seq_collator
   tokenize_fn_name: kqa_pseudo_target_tokenization_seq2seq
+  use_fast: False
   padding_side: right                
  
   train_bsz: 8
