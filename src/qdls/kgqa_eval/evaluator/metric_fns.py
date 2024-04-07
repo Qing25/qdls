@@ -14,8 +14,6 @@ from qdls.gql.sparql.utils.syntax import syntax_check as syntax_check_sparql
 from qdls.gql.cypher.utils.kqa_eval import exec_one_sample_cypher
 from torchmetrics.functional import sacre_bleu_score
 
-import os, sys 
-sys.path.append("/home/qing/raid/myrepos/qdls/")
 from src.qdls.kgqa_eval.exact_set.evaluation_em import evaluate_em
 
 from pygments.lexers import get_lexer_by_name
