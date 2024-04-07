@@ -8,7 +8,11 @@
     用于ICL 的各种retriever
 
 '''
+""" 
+BM25Retriever: 用于检索文本数据的BM25检索器
+VectorRetriever: 用于检索文本数据的向量检索器
+    rquirements:
+        faiss-gpu
+        sentence_transformers
 
-
-from .bm25_retriever import *
-from .vector_retriever import *
+"""

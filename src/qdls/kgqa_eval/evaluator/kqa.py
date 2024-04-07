@@ -65,7 +65,7 @@ class KqaAutoEvaluator(BaseEvalutor):
         obj = cls(lang=lang)
         obj.data_to_eval = data
         obj.id2sample = {sample['sample_id']:sample for sample in obj.data_to_eval}
-        obj.length2sids = obj.length_to_sampleids()
+        # obj.length2sids = obj.length_to_sampleids()  # no raw data
         return obj 
 
     def save_processed(self, target_path=None):
@@ -128,7 +128,9 @@ class KqaAutoEvaluator(BaseEvalutor):
         for i in ids:
             sample = self.id2sample[i]    
             for m in self.metrics_to_calc:
-                scores[m].append(float(sample.get(m, 0)))
+                # if necessary, eg, some has negative values
+                # scores[m].append(max(float(sample.get(m, 0)), 0))
+                scores[m].append(float(sample.get(m, 0)))  
         return {k:sum(v)/L for k,v in scores.items()}
     
     @staticmethod
