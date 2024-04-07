@@ -25,12 +25,19 @@ example_virtuoso_config = Namespace(
 
 class KqaAutoEvaluator(BaseEvalutor):
     def __init__(self, file=None, lang='cypher', nproc=1, **kwargs) -> None:
+        """
+            file: json file path or loaded json data 
+            lang: cypher or sparql, or other
+            nproc: number of processes
+            kwargs: 
+                neo4j_config = Namespace(neo4j_uri="neo4j://map:28892", neo4j_user="neo4j", neo4j_passwd="neo4j", timeout=3)
+                metrics_to_calc=['exact_set_match', 'rouge-L']
+        """
         self.lang = lang
         self.nproc = nproc
         self.neo4j_config = kwargs.get('neo4j_config', "please set neo4j_config in kwargs")
         self.metrics_to_calc = ['bleu', 'executable', 'exact_match']
-        if lang == 'cypher':
-            self.metrics_to_calc.extend(['is_correct'])
+        self._manage_metrics_to_calc(kwargs)
 
         print_string(f"metrics to calc: {self.metrics_to_calc}")
         print_string(f"neo4j config: {self.neo4j_config}")
@@ -47,7 +54,18 @@ class KqaAutoEvaluator(BaseEvalutor):
         if lang == 'sparql':
             print_string(f"to evaluate for sparql generation, calling obj.eval_sparql()")
             self.eval_sparql()
-            self.metrics_to_calc.extend(['is_correct'])
+
+    def _manage_metrics_to_calc(self, kwargs):
+        """  
+            增加在 init 函数通过 kwargs 传入新的 metrics_to_calc
+            lang 是 cypher 和 sparql 默认增加 is_correct
+        """
+        if self.lang in ['cypher', 'sparql']:
+            self.metrics_to_calc.append("is_correct")  # 默认是要计算准确率的
+        if "metrics_to_calc" in kwargs:
+            for metric in kwargs['metrics_to_calc']:
+                if metric not in self.metrics_to_calc:
+                    self.metrics_to_calc.append(metric)   
 
     def eval_sparql(self):
         from .sparql_utils import exec_one_sample 

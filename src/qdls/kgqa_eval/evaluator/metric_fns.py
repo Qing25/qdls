@@ -14,6 +14,10 @@ from qdls.gql.sparql.utils.syntax import syntax_check as syntax_check_sparql
 from qdls.gql.cypher.utils.kqa_eval import exec_one_sample_cypher
 from torchmetrics.functional import sacre_bleu_score
 
+import os, sys 
+sys.path.append("/home/qing/raid/myrepos/qdls/")
+from src.qdls.kgqa_eval.exact_set.evaluation_em import evaluate_em
+
 from pygments.lexers import get_lexer_by_name
 from pygments.lexers.rdf import SparqlLexer
 from pygments.token import *
@@ -22,6 +26,20 @@ sp_lexer = SparqlLexer()
 cy_lexer = get_lexer_by_name('py2neo.cypher') # pip install py2neo to fix
 
 metric_fns = Register('metric_fns')
+
+
+@metric_fns.register('exact_set_match')
+def exact_set_match(pred, gold, verbose=False):
+    """ 
+    调用 另外实现的 exact set match 
+    比较的是几个子句中的字符串
+    """
+    try:
+        is_match, gold_splits, pred_splits, dismatch_gold, dismatch_pred = evaluate_em(gold, pred)
+    except Exception as e:
+        return 0.0
+    return 1.0 if is_match else 0.0
+
 
 @metric_fns.register("exact_match")
 def match_query(pred, gold, lexer='cypher', verbose=False):
@@ -42,11 +60,11 @@ def match_query(pred, gold, lexer='cypher', verbose=False):
     gold_units = [ substr for tag, substr in lexer.get_tokens(gold) if substr.strip() != "" ]
     res = (gold_units == pred_units)
     if res:
-        return 1
+        return 1.0
     else:
         if verbose:
             print(f'{" ".join(gold_units)} \n {" ".join(pred_units)}')
-        return 0
+        return 0.0
     
 
 def executable_fn_cypher(pred):
@@ -103,6 +121,9 @@ def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
 
     if 'exact_match' in metrics:
         sample['exact_match'] = match_query(sample['pred'], sample[ref_key], lexer=ref_key)
+
+    if 'exact_set_match' in metrics:
+        sample['exact_set_match'] = exact_set_match(sample['pred'], sample[ref_key])
 
     if 'is_correct' in metrics or 'exec_info' in metrics:
         assert ref_key in ['cql', 'cypher'], f"only cql or cypher is supported, but got {ref_key}"
