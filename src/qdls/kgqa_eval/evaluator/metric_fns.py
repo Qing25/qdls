@@ -12,7 +12,10 @@ from qdls.gql.cypher.utils.syntax import syntax_check as syntax_check_cypher
 from qdls.gql.sparql.utils.syntax import syntax_check as syntax_check_sparql
 
 from qdls.gql.cypher.utils.kqa_eval import exec_one_sample_cypher
-from torchmetrics.functional import sacre_bleu_score
+try:
+    from torchmetrics.text import sacre_bleu_score # new in torchmetrics 2.0
+except:
+    from torchmetrics.functional import sacre_bleu_score
 
 import os, sys 
 sys.path.append("/home/qing/raid/myrepos/qdls/")
@@ -101,11 +104,19 @@ def bleu_fn(pred, refs):
 
 
 def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
-    """ 默认的预测 key 为 pred 
+    """ 默认的预测 key 为 `pred`， 参考答案的key为 ref_key 
         sample normalized_sample()的结果
         ref_key 为参考答案的key: cypher,cql, sparql
         metrics 为要计算的指标， 默认为 ['bleu', 'executable', 'exact_match']
         neo4j_config 为neo4j的配置 
+
+        新增 metric:  
+        ``` from qdls.kgqa_eval.evaluator import metric_fns
+            @metric_fns.register("NEW_METRIC")
+            def NEW_METRIC_fn(sample, **kwargs): # kwargs 用于传递额外参数
+                return res 
+        ``` 
+        最终效果: `sample['NEW_METRIC'] = NEW_METRIC_fn(sample)`
     """
     if metrics is None:
         metrics = ['bleu', 'executable', 'exact_match']
@@ -135,6 +146,13 @@ def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
         sample['is_correct'] = is_correct
         sample['exec_info'] = info
         sample['exec_results'] = results
+
+    # 处理其他 metric
+    for k, fn in metric_fns:
+        if k in sample:
+            continue
+        res = fn(sample, neo4j_config=neo4j_config, ref_key=ref_key)
+        sample[k] = res 
 
     # import pdb;pdb.set_trace();
     return sample

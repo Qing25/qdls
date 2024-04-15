@@ -36,7 +36,10 @@ class KqaAutoEvaluator(BaseEvalutor):
         self.lang = lang
         self.nproc = nproc
         self.neo4j_config = kwargs.get('neo4j_config', "please set neo4j_config in kwargs")
-        self.metrics_to_calc = ['bleu', 'executable', 'exact_match']
+        if kwargs.get('metrics_to_calc') is not None:
+            self.metrics_to_calc = kwargs['metrics_to_calc']
+        else:
+            self.metrics_to_calc = ['bleu', 'executable', 'exact_match']
         self._manage_metrics_to_calc(kwargs)
 
         print_string(f"metrics to calc: {self.metrics_to_calc}")
