@@ -34,7 +34,7 @@ class BaseEvalutor(ABC):
             self.raw_data = load_json(file) if type(file) is str else file 
             
             self.data_to_eval = [ self.normalize_sample(s, refer_key) for s in self.raw_data ]
-            self.__pre_calc_metrics()
+            self._pre_calc_metrics()
             self.id2sample = {sample['sample_id']:sample for sample in self.data_to_eval}
 
             
@@ -68,7 +68,7 @@ class BaseEvalutor(ABC):
                 print(f"{k:<20}: {v:.4f}")
         return scores
     
-    def __pre_calc_metrics(self):
+    def _pre_calc_metrics(self):
         """ 使用 datasets库 并行计算所有指标 """
         ds = datasets.Dataset.from_list(self.data_to_eval)
         print(ds)
