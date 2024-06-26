@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "qdls"
-version = "0.1.6"
+version = "0.1.7"
 authors = [
   { name="Qing25", email="aqsz2526@outlook.com" },
 ]
@@ -16,7 +16,8 @@ dependencies = [
     "fire",
     "tqdm",
     "termcolor",
-    "omegaconf"
+    "omegaconf",
+    "loguru"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

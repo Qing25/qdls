@@ -53,8 +53,8 @@ class BaseEvalutor(ABC):
             增加在 init 函数通过 kwargs 传入新的 metrics_to_calc
             lang 是 cypher 和 sparql 默认增加 is_correct
         """
-        if self.refer_key in ['cypher', 'sparql']:
-            self.metrics_to_calc.append("is_correct")  # 默认是要计算准确率的
+        # if self.refer_key in ['cypher', 'sparql']:
+        #     self.metrics_to_calc.append("is_correct")  # 默认是要计算准确率的 TODO:但是对应的是 kqa 的计算，考虑删除
         if "metrics_to_calc" in kwargs:
             for metric in kwargs['metrics_to_calc']:
                 if metric not in self.metrics_to_calc:
