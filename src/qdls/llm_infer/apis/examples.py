@@ -107,7 +107,36 @@ def chattool_demo(prompt="hello"):
     print(c.chat_log)
     return c 
 
-def langchain_demo():
+def chattool_parallel_demo():
+    import chattool
+
+    chattool.base_url=CHATANY_API_URL; chattool.api_key = CHATANY_API_KEY
+    prompts = [] 
+    model = 'gpt-4o-mini'; version= 'test_demo'
+    ckpt_path = f"./cache/{model}_{version}.jsonl"
+    def data2chat(prompt):
+        c = chattool.Chat()
+        c.user(prompt)
+        return c
+
+    chattool.async_chat_completion(
+        prompts,
+        model=model,
+        chkpoint=ckpt_path,
+        nproc=8,
+        data2chat=data2chat,
+        timeinterval=1, max_tries=3, timeout=3,
+        stop="</s>"
+    )
+    chats = chattool.load_chats(ckpt_path)
+
+    print(len(chats), "loaded! ")
+
+    for chat in chats:
+        output = chat.chat_log[-1]['content']
+
+
+def langchain_demo(prompt="hello"):
     """ 
      langchain OpenAI 调用本地模型
     """
@@ -125,9 +154,12 @@ def langchain_demo():
     extra_body={
         "stop_token_ids": [151329, 151336, 151338]
         }
-    print(llm.invoke("你是谁？", extra_body=extra_body))
+    print(llm.invoke(prompt, extra_body=extra_body))
 
 if __name__ == '__main__':
+    from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+    prompt = [SystemMessage(), HumanMessage("你好")]
+    langchain_demo(prompt)
     pass 
 
 

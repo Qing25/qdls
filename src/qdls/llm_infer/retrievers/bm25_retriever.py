@@ -105,3 +105,16 @@ class BM25Retriever(Retriever):
         # 使用BM25算法从数据源中获取与分词后的查询最相关的前topk个样本
         topk_samples = self.bm25.get_top_n(tokenized_query, self.data_source, n=topk)
         return topk_samples
+
+
+if __name__ == '__main__':
+    data = [
+        {
+            'question': "asdfa",
+            "answer": "sdfa"
+        },
+
+    ]
+
+    bm25 = BM25Retriever(data, key='question', lang='zh')
+    datalist = bm25.get_topk_samples("asdfa", topk=1)
