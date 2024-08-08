@@ -20,9 +20,18 @@ except ImportError:
 from qdls.llm_infer.retrievers.base_retriever import Retriever
 
 class VectorRetriever(Retriever):
-    def __init__(self, data_source, key=None, embedding_model_path=None):
+    def __init__(self, data_source, key=None, embedding_model_path=None, cache_file=None):
+        """
+        Args:
+            data_source: List[Dict] or List[Object].
+            key: str or callable function. fetch data from each sample in data_source.
+            embedding_model_path: model used to encode text. 
+            cache_file: file path to save the cached Vector/Index
+
+        """
         self.data_source = data_source
         assert key is not None, "key is not specified"
+        self.cache_file = cache_file      
         if type(key) is str:
             self.items4retrieval = [ sample[key] for sample in data_source]
         elif callable(key):
@@ -38,11 +47,15 @@ class VectorRetriever(Retriever):
     def _init_encoding_model(self, model_name_or_path=None):
         if model_name_or_path is None:
             model_name_or_path = "/sshfs/pretrains/sentence-transformers/all-MiniLM-L6-v2"
+            # option models: /sshfs/pretrains/Salesforce/SFR-Embedding-Mistral
         model = SentenceTransformer(model_name_or_path)
         return model 
             
     def _build_index(self):
-        cache_file = f"{ self.key if type(self.key) is str else self.key.__name__ }_index.bin"
+        if self.cache_file is not None:
+            cache_file = self.cache_file
+        else:
+            cache_file = f"{ self.key if type(self.key) is str else self.key.__name__ }_index.bin"
 
         if os.path.exists(cache_file):
             self.index = faiss.read_index(cache_file)
@@ -64,9 +77,18 @@ class VectorRetriever(Retriever):
     
 class VectorRetrieverLangChain(VectorRetriever):
 
-    def __init__(self, data_source, key=None, embedding_model_path=None):
+    def __init__(self, data_source, key=None, embedding_model_path=None, cache_file=None):
+        """
+        Args:
+            data_source: List[Dict] or List[Object].
+            key: str or callable function. fetch data from each sample in data_source.
+            embedding_model_path: model used to encode text. 
+            cache_file: file path to save the cached Vector/Index
+
+        """
         self.data_source = data_source
         assert key is not None, "key is not specified"
+        self.cache_file = cache_file
         if type(key) is str:
             # use metadata property to store the original sample
             self.items4retrieval = [Document(sample[key], metadata=sample) for sample in data_source]
@@ -94,10 +116,13 @@ class VectorRetrieverLangChain(VectorRetriever):
         return model
     
     def _build_index(self):
-        
-        persist_directory = f"{ self.key if type(self.key) is str else self.key.__name__ }_index"
-        collection_name = "default"
+        if self.cache_file is not None:
+            persist_directory = self.cache_file
+        else:
+            persist_directory = f"{ self.key if type(self.key) is str else self.key.__name__ }_index"
 
+        collection_name = "default"
+        
         if os.path.exists(persist_directory):
             vectorstore = Chroma(
                 collection_name=collection_name,

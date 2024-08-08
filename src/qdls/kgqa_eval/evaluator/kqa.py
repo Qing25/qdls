@@ -10,7 +10,7 @@ from argparse import Namespace
  
 import datasets 
 
-from .base import BaseEvalutor
+from .base import BaseEvaluator
 from .metric_fns import calc_metrics_per_sample
 
 example_neo4j_config = Namespace(
@@ -23,7 +23,7 @@ example_virtuoso_config = Namespace(
 )
 
 
-class KqaAutoEvaluator(BaseEvalutor):
+class KqaAutoEvaluator(BaseEvaluator):
     def __init__(self, file=None, lang='cypher', nproc=1, **kwargs) -> None:
         """
             file: json file path or loaded json data 

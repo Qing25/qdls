@@ -7,7 +7,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from neo4j import GraphDatabase
 
-from qdls.kgqa_eval.evaluator.base import BaseEvalutor
+from qdls.kgqa_eval.evaluator.base import BaseEvaluator
 from qdls.kgqa_eval.evaluator.metric_fns import calc_metrics_per_sample, metric_fns
 
 
@@ -43,7 +43,7 @@ def metaqa_acc(sample, **kwargs):
         return False 
     
 
-class MetaqaEval(BaseEvalutor):
+class MetaqaEval(BaseEvaluator):
     def __init__(self, file=None, lang='cypher', nproc=1, **kwargs) -> None:
         self.lang = lang
         self.nproc = nproc

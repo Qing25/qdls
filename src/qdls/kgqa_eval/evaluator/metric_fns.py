@@ -17,7 +17,7 @@ try:
 except:
     from torchmetrics.functional import sacre_bleu_score
 
-from src.qdls.kgqa_eval.exact_set.evaluation_em import evaluate_em
+from qdls.kgqa_eval.exact_set.evaluation_em import evaluate_em
 
 from pygments.lexers import get_lexer_by_name
 from pygments.lexers.rdf import SparqlLexer
@@ -115,6 +115,7 @@ def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
                 return res 
         ``` 
         最终效果: `sample['NEW_METRIC'] = NEW_METRIC_fn(sample)`
+        如果这个 function 返回的是一个 dict，则会将其 update 到 sample 中
     """
     if metrics is None:
         metrics = ['bleu', 'executable', 'exact_match']
@@ -145,13 +146,16 @@ def calc_metrics_per_sample(sample, ref_key, metrics=None, neo4j_config=None):
         sample['exec_info'] = info
         sample['exec_results'] = results
 
-    # 处理其他 metric
+    # 处理其他 metric 
     for k in metrics:
         if k in sample:
             continue
         fn = metric_fns.get(k) # 获取注册的函数
         res = fn(sample, neo4j_config=neo4j_config, ref_key=ref_key)
-        sample[k] = res 
+        if type(res) is dict:
+            sample.update(res)
+        else:
+            sample[k] = res 
 
     # import pdb;pdb.set_trace();
     return sample

@@ -18,7 +18,7 @@ from qdls.data import load_json, save_json
 from qdls.utils import print_string
 from qdls.kgqa_eval.evaluator.metric_fns import calc_metrics_per_sample
 
-class BaseEvalutor(ABC):
+class BaseEvaluator(ABC):
     """ 
         实现 __init__ 和 normalize_sample 函数
     """
