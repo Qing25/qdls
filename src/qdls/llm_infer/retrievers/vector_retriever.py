@@ -43,7 +43,7 @@ class VectorRetriever(Retriever):
         self.model = self._init_encoding_model(embedding_model_path)
 
         # 
-        self._build_index( self.encode_fn if hasattr(self, 'encode_fn') else None)
+        self._handle_cache( self.encode_fn if hasattr(self, 'encode_fn') else None)
 
         # default args 
         self.bsz = kwargs.get('bsz', 128)
@@ -56,7 +56,7 @@ class VectorRetriever(Retriever):
         model = SentenceTransformer(model_name_or_path, trust_remote_code=True)
         return model 
             
-    def _build_index(self, encode_fn=None):
+    def _handle_cache(self, encode_fn=None):
         os.makedirs("cached_index", exist_ok=True)
         if self.cache_file is not None:
             cache_file = os.path.join(".", "cached_index",f"{self.cache_file}_index.bin")
@@ -127,7 +127,7 @@ class VectorRetrieverLangChain(VectorRetriever):
             raise Exception(f"key should be dict key or callable function")
         self.key = key 
         self.model = self._init_encoding_model(embedding_model_path)
-        self._build_index()
+        self._handle_cache()
 
 
     def _init_encoding_model(self, model_name_or_path=None):
@@ -143,8 +143,8 @@ class VectorRetrieverLangChain(VectorRetriever):
                 )
         return model
     
-    def _build_index(self):
-        os.makeddirs("cached_index", exist_ok=True)
+    def _handle_cache(self):
+        os.makedirs("cached_index", exist_ok=True)
         if self.cache_file is not None:
             persist_directory = self.cache_file + '_index'
         else:

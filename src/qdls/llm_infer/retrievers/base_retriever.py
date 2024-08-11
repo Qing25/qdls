@@ -10,3 +10,6 @@ class Retriever(ABC):
             return topk samples according to query
         """
         raise NotImplementedError
+    
+
+

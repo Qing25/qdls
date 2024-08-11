@@ -3,10 +3,13 @@
 from abc import ABC, abstractmethod
 from typing import List, Any,  Union, Callable
 from jieba import cut
+import os 
+import pickle
+from loguru import logger
 from rank_bm25 import BM25Okapi
 from qdls.gql.cypher.utils.parse import split_cypher # TODO: unified interface for cypher sparql, etc 
 
-from .base_retriever import Retriever
+from qdls.llm_infer.retrievers.base_retriever import Retriever
 
 class LanguageProcessor(ABC):
     @abstractmethod
@@ -26,7 +29,7 @@ class CypherProcessor(LanguageProcessor):
         return split_cypher(document)
 
 class BM25Retriever(Retriever):
-    def __init__(self, data_source: List[Any], key: Union[str, Callable] = None, lang: str = 'en') -> None:
+    def __init__(self, data_source: List[Any], key: Union[str, Callable] = None, lang: str = 'en', **kwargs) -> None:
         """
         初始化一个处理文本数据的实例。
 
@@ -34,12 +37,14 @@ class BM25Retriever(Retriever):
         - data_source: List[Any], 数据源列表，每个元素可以是任何类型，但必须包含可处理的文本信息。
         - key: str, 用于从数据源中提取文本信息的键。此键应指向包含文本数据的字段。
         - lang: str, 文本的语言，默认为'en'表示英语。
+        - kwargs: dict, 其他参数。 一般不需要使用，可以传入cache_file参数指定缓存文件名(./cached_index/{cache_file})。
 
         返回值:
         - 无
         """
         # 确保key已经被指定
         assert key is not None, "key is not specified"
+        self.key = key 
         # 确保data_source是一个列表
         assert isinstance(data_source, list), "data_source must be a list"
         self.data_source = data_source
@@ -48,10 +53,9 @@ class BM25Retriever(Retriever):
         self.lang = lang
         # 初始化语言处理器，用于处理特定语言的文本
         self.language_processor = self._get_language_processor()
-        # 对数据源进行分词处理
-        self.tokenized_corpus = self._tokenize_data()
-        # 初始化BM25索引，用于文本的检索
-        self.bm25 = BM25Okapi(self.tokenized_corpus)
+
+        self.cache_file = kwargs.get("cache_file", None)
+        self._handle_cache()
 
     def _process_key(self, key: Union[str, Callable]) -> List[Any]:
         """
@@ -105,6 +109,29 @@ class BM25Retriever(Retriever):
         # 使用BM25算法从数据源中获取与分词后的查询最相关的前topk个样本
         topk_samples = self.bm25.get_top_n(tokenized_query, self.data_source, n=topk)
         return topk_samples
+    
+    def _handle_cache(self):
+        """ 
+            将 self.bm25 缓存到文件中
+        """
+        os.makedirs("cached_index", exist_ok=True)
+        if self.cache_file is  None:
+            self.cache_file = f"{ self.key if type(self.key) is str else self.key.__name__ }"
+        cache_file = os.path.join(".", "cached_index", f"{self.cache_file}_bm25_retriever.pkl")
+        self.cache_file = cache_file
+
+        if os.path.exists(cache_file):
+            with open(cache_file, "rb") as f:
+                self.bm25 = pickle.load(f)
+                logger.info(f"BM25 index loaded from {cache_file}")
+        else:
+            # 对数据源进行分词处理
+            self.tokenized_corpus = self._tokenize_data()
+            # 初始化BM25索引，用于文本的检索
+            self.bm25 = BM25Okapi(self.tokenized_corpus)
+            with open(cache_file, "wb") as f:
+                pickle.dump(self.bm25, f)
+                logger.info(f"BM25 index saved to {cache_file}")
 
 
 if __name__ == '__main__':
