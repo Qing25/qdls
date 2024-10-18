@@ -18,10 +18,8 @@ class DatasetBuilder():
             2.本地文件 train_path val_path test_path
         """
         if not hasattr(config.data, 'dataset_name'):
-            assert hasattr(config.data, 'train_path') and \
-                    hasattr(config.data, 'val_path') and \
-                    hasattr(config.data, 'test_path'), \
-            f"train_path, val_path, test_path should be provided when dataset_name is not provided"
+            assert hasattr(config.data, 'train_path') ,\
+            f"train_path should be provided when dataset_name is not provided"
             self._init_from_paths(config)
         else:
             assert hasattr(config.data, 'dataset_name'), \
@@ -37,9 +35,9 @@ class DatasetBuilder():
     
     def _init_from_paths(self, config):
         """ 从本地文件加载数据, 允许'' """
-        self.trainset = load_json(config.data.train_path) if config.data.train_path else []
-        self.valset = load_json(config.data.val_path) if config.data.val_path else []
-        self.testset = load_json(config.data.test_path) if config.data.test_path else []
+        self.trainset = load_json(config.data.train_path) if hasattr(config.data, 'train_path') and type(config.data.train_path) is str else []
+        self.valset = load_json(config.data.val_path) if hasattr(config.data, 'val_path') and type(config.data.val_path) is str else []
+        self.testset = load_json(config.data.test_path) if hasattr(config.data, 'test_path') and type(config.data.test_path) is str else []
 
         
     def _init_from_hf(self, config, proportion=0.8):

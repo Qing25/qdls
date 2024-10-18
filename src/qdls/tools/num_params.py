@@ -5,6 +5,7 @@
 # @Email   :   aqsz2526@outlook.com
 ######################### docstring ########################
 '''
+   加载一个 huggingface 模型，计算其参数量
 '''
 import fire 
 

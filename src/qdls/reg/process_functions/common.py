@@ -9,3 +9,6 @@
 '''
 from ..register import registers
 
+@registers.process_function.register("test_function")
+def test_function(data, *args, **kwargs):
+    return data 

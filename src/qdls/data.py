@@ -334,9 +334,62 @@ def recursive_file_find(root):
     return R
 
 
-if __name__ == '__main__':
-    R = recursive_file_find("..")
-    print(f"{len(R)} files found! ")
 
+try:
+    import datasets
+except:
+    pass 
+
+def parallel_task_via_joblib(data, func, n_jobs=4, **kwargs):
+    """
+    Args:
+        data (list): 传入的数据
+        func (function): 传入的函数
+        n_jobs (int, optional): 并行的任务数. Defaults to 4.
+
+    Returns:
+        list: 返回的结果
+    """
+    from joblib import Parallel, delayed
+    R = Parallel(n_jobs=n_jobs)(delayed(func)(d, **kwargs) for d in data)
+    return R
+
+def parallel_task(data, func, nproc=4, **kwargs):
+    """ 并行任务 
+    kwargs 将被传给 func
+    """
+    if nproc > 1:
+        ds = datasets.Dataset.from_list(data)
+        ds = ds.map(func, num_proc=nproc, fn_kwargs=kwargs)
+        R = ds.to_list()
+    else:
+        R = []
+        for s in tqdm(data):
+            R.append(func(s, **kwargs))
+    return R 
+
+def fn(d):
+    d['new_col']  = 1
+    time.sleep(0.01)
+    return d 
+
+if __name__ == '__main__':
+    # R = recursive_file_find("..")
+    # print(f"{len(R)} files found! ")
+
+    @timeit
+    def _test_parallel_task():
+        data = [{'x':0} for _ in range(1000)]
+        R = parallel_task(data, fn, 8)
+        print(R[0])
+
+    @timeit
+    def _sequential_task():
+        data = [{'x':0} for _ in range(1000)]
+        R = [fn(d) for d in data]
+        print(R[0])
+
+    _test_parallel_task()
+    _sequential_task()
     
    

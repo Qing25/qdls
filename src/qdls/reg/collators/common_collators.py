@@ -58,3 +58,29 @@ class Seq2seqCollator:
             'labels': torch.tensor(labels).long() if labels is not None else None ,
         }
     
+
+
+@registers.collator.register('seqcls_collator')
+class SeqClsCollator:
+    """ 
+        序列分类的collator
+    """
+    def __init__(self, tokenizer, mode='train') -> None:
+        self.tokenizer = tokenizer
+        self.mode = mode
+
+    def __call__(self, features) :
+        if self.mode == 'test':
+            input_ids= sequence_padding([x['input_ids'] for x in features ], padding=self.tokenizer.pad_token_id)
+            attention_mask= sequence_padding([ x['attention_mask'] for x in features ], padding=0)
+            labels = None 
+        else:
+            input_ids= sequence_padding([x['input_ids'] for x in features ], padding=self.tokenizer.pad_token_id)   #  
+            attention_mask= sequence_padding([ x['attention_mask'] for x in features ], padding=0)
+            labels = [x['labels'] for x in features]
+
+        return {
+            'input_ids' : torch.tensor(input_ids).long(),
+            'attention_mask' : torch.tensor(attention_mask).long(),
+            'labels': torch.tensor(labels).long() if labels is not None else None ,
+        }
