@@ -12,5 +12,5 @@
     两个方法
 '''
 
-from .base import BaseEvalutor
+from .base import BaseEvaluator
 from .kqa import KqaAutoEvaluator
