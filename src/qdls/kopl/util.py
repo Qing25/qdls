@@ -4,6 +4,7 @@ from collections import defaultdict
 from queue import Queue
 from datetime import date
 from tqdm import tqdm
+import re 
 
 def comp(a, b, op):
 	"""
@@ -135,7 +136,67 @@ class ValueClass(object):
 			return self.value.isoformat()
 		
 	def __repr__(self):
-		return self.__str__()
+		return f"ValueClass: {self.__dict__}"
 
 	def __hash__(self):
 		return hash(str(self))
+	
+	@staticmethod
+	def reconstruct(self, string):
+		assert string.startswith("ValueClass: ")
+		d = eval(string[12:])
+		return ValueClass(**d)
+	
+	@staticmethod
+	def deserialize(serialized_str):
+		"""
+		Deserialize a ValueClass object from its string representation.
+		
+		Args:
+			serialized_str (str): The string representation of the ValueClass object.
+		
+		Returns:
+			ValueClass: The deserialized ValueClass object.
+		"""
+		# Remove the surrounding quotes
+		if serialized_str.startswith('"') and serialized_str.endswith('"'):
+			serialized_str = serialized_str.strip('"')
+		if serialized_str.startswith("'") and serialized_str.endswith("'"):
+			serialized_str = serialized_str.strip("'")
+
+		serialized_str = serialized_str.strip()
+		
+		# Determine the type based on the content
+		if re.match(r'^\d{4}-\d{2}-\d{2}$', serialized_str):
+			# Date type
+			value = date.fromisoformat(serialized_str)
+			return ValueClass('date', value)
+		elif re.match(r'^\d{4}$', serialized_str):
+			# Year type
+			value = int(serialized_str)
+			return ValueClass('year', value)
+		elif re.match(r'^-?\d+(\.\d+)?(\s\w+)+$', serialized_str):
+			# Quantity type
+			parts = serialized_str.split(' ')
+			value = float(parts[0])
+			unit = " ".join(parts[1:])
+			return ValueClass('quantity', value, unit)
+		else:
+			# String type
+			return ValueClass('string', serialized_str)
+
+
+
+
+if __name__ == '__main__':
+	v = ValueClass('quantity', 1946, 'square kilometre')
+	print(v)
+	print(str(v))
+	# Example usage:
+	# serialized = '"2025-02-17"'
+	# serialized = '"1946 square kilometre"'
+	serialized = '1999'
+	deserialized_obj = ValueClass.deserialize(serialized)
+	print(type(deserialized_obj))
+	print(deserialized_obj.__dict__)
+	print(deserialized_obj)
