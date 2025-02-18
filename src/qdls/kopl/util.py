@@ -2,6 +2,7 @@ import json
 import os
 from collections import defaultdict
 from queue import Queue
+import datetime 
 from datetime import date
 from tqdm import tqdm
 import re 
@@ -136,7 +137,9 @@ class ValueClass(object):
 			return self.value.isoformat()
 		
 	def __repr__(self):
-		return f"ValueClass: {self.__dict__}"
+		# return f"ValueClass: {self.__dict__}"
+		return f"ValueClass(type='{self.type}', value={repr(self.value)}, unit={repr(self.unit)})"
+
 
 	def __hash__(self):
 		return hash(str(self))
@@ -145,6 +148,10 @@ class ValueClass(object):
 	def reconstruct(self, string):
 		assert string.startswith("ValueClass: ")
 		d = eval(string[12:])
+		return ValueClass(**d)
+	
+	@staticmethod
+	def from_dict(d):
 		return ValueClass(**d)
 	
 	@staticmethod
@@ -192,11 +199,15 @@ if __name__ == '__main__':
 	v = ValueClass('quantity', 1946, 'square kilometre')
 	print(v)
 	print(str(v))
-	# Example usage:
-	# serialized = '"2025-02-17"'
-	# serialized = '"1946 square kilometre"'
-	serialized = '1999'
-	deserialized_obj = ValueClass.deserialize(serialized)
-	print(type(deserialized_obj))
-	print(deserialized_obj.__dict__)
-	print(deserialized_obj)
+	print(repr(v))
+	print("inverse",  eval(repr(v)))
+	
+	
+	v = ValueClass('date', date(1946, 1, 1))
+	print(v)
+	print(str(v))
+	print(repr(v))
+	obj = eval(repr(v))
+	print(obj)
+
+	
